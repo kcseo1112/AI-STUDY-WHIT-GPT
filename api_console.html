@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>AI 학습 지원 API 콘솔</title>
+  <style>
+    body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    h1 { margin-top: 0; }
+    section { background: #fff; padding: 16px; margin-bottom: 16px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    label { display: block; margin-bottom: 8px; font-weight: 600; }
+    input[type="text"], textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; }
+    textarea { resize: vertical; min-height: 120px; }
+    button { background: #333; color: #fff; border: none; padding: 10px 14px; border-radius: 6px; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    pre { background: #111; color: #0f0; padding: 12px; border-radius: 6px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>AI 학습 지원 API 콘솔</h1>
+  <p>프레임워크 없이 구현된 socket 기반 HTTP 서버의 엔드포인트를 빠르게 테스트합니다.</p>
+
+  <section>
+    <h2>1) 파일 업로드</h2>
+    <input type="file" id="uploadInput" />
+    <button onclick="uploadFile()">업로드</button>
+    <pre id="uploadResult"></pre>
+  </section>
+
+  <section>
+    <h2>2) STT 변환</h2>
+    <label>업로드된 파일 상대 경로 (예: uploads/sample.m4a)</label>
+    <input type="text" id="transcribePath" placeholder="uploads/..." />
+    <button onclick="transcribe()">변환 실행</button>
+    <pre id="transcribeResult"></pre>
+  </section>
+
+  <section>
+    <h2>3) 요약 생성</h2>
+    <label>텍스트 직접 입력 또는 STT 결과 경로 입력</label>
+    <textarea id="summaryText" placeholder="요약할 텍스트"></textarea>
+    <input type="text" id="summaryPath" placeholder="transcripts/... (선택)" />
+    <button onclick="summarize()">요약 실행</button>
+    <pre id="summaryResult"></pre>
+  </section>
+
+  <section>
+    <h2>4) 퀴즈 생성</h2>
+    <label>요약 텍스트 또는 요약 파일 경로 입력</label>
+    <textarea id="quizText" placeholder="퀴즈를 만들 텍스트"></textarea>
+    <input type="text" id="quizPath" placeholder="summaries/... (선택)" />
+    <button onclick="createQuiz()">퀴즈 생성</button>
+    <pre id="quizResult"></pre>
+  </section>
+
+<script>
+async function uploadFile() {
+  const fileInput = document.getElementById('uploadInput');
+  const result = document.getElementById('uploadResult');
+  if (!fileInput.files.length) {
+    alert('업로드할 파일을 선택하세요');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+  const res = await fetch('/api/upload', { method: 'POST', body: formData });
+  result.textContent = await res.text();
+}
+
+async function transcribe() {
+  const path = document.getElementById('transcribePath').value.trim();
+  const result = document.getElementById('transcribeResult');
+  if (!path) { alert('파일 경로를 입력하세요'); return; }
+  const res = await fetch('/api/transcribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file_path: path })
+  });
+  result.textContent = await res.text();
+}
+
+async function summarize() {
+  const text = document.getElementById('summaryText').value.trim();
+  const transcriptPath = document.getElementById('summaryPath').value.trim();
+  const result = document.getElementById('summaryResult');
+  if (!text && !transcriptPath) { alert('텍스트 또는 경로를 입력하세요'); return; }
+  const res = await fetch('/api/summarize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: text || undefined, transcript_path: transcriptPath || undefined })
+  });
+  result.textContent = await res.text();
+}
+
+async function createQuiz() {
+  const text = document.getElementById('quizText').value.trim();
+  const summaryPath = document.getElementById('quizPath').value.trim();
+  const result = document.getElementById('quizResult');
+  if (!text && !summaryPath) { alert('텍스트 또는 경로를 입력하세요'); return; }
+  const res = await fetch('/api/quiz', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: text || undefined, summary_path: summaryPath || undefined })
+  });
+  result.textContent = await res.text();
+}
+</script>
+</body>
+</html>

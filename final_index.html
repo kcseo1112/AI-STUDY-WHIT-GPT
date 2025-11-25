@@ -1089,19 +1089,102 @@
 
         // 6. 통신 요청 핸들러 (Java Bridge 호출)
 
-        function handleConvert() {
+        async function handleConvert() {
             const fileInput = document.getElementById('audioFile_convert');
-            if (fileInput.files.length === 0) { 
-                alert('⚠️ 오디오 파일을 선택해주세요.'); 
-                return; 
+            if (fileInput.files.length === 0) {
+                alert('⚠️ 오디오 파일을 선택해주세요.');
+                return;
             }
+
             const file = fileInput.files[0];
-            
-            if (window.javaApp) { 
-                window.javaApp.convertAudio(file.path, file.name); 
-            } else { 
-                alert(`📤 [변환 요청] 파일: ${file.name}\n\n(Java->Python STT 로직 구현 필요)`); 
+
+            if (window.javaApp) {
+                // Java 클라이언트가 연결된 경우, 기존 브리지 호출 유지
+                window.javaApp.convertAudio(file.path, file.name);
+                return;
+            }
+
+            try {
                 showActionForm('convertForm');
+                documentTitle.textContent = `🎙️ 변환 진행 중: ${file.name}`;
+
+                // 1) 업로드
+                const formData = new FormData();
+                formData.append('file', file);
+                const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
+                if (!uploadRes.ok) throw new Error('파일 업로드 실패');
+                const uploadData = await uploadRes.json();
+                const filePath = uploadData?.file?.path;
+                if (!filePath) throw new Error('업로드 응답에서 파일 경로를 찾을 수 없습니다.');
+
+                // 2) STT 변환
+                const sttRes = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file_path: filePath })
+                });
+                if (!sttRes.ok) throw new Error('STT 변환 실패');
+                const sttData = await sttRes.json();
+                const transcriptText = sttData.text || '';
+                const transcriptPath = sttData.transcript_path;
+
+                // 3) 요약 생성
+                const summaryRes = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: transcriptText, transcript_path: transcriptPath })
+                });
+                if (!summaryRes.ok) throw new Error('요약 생성 실패');
+                const summaryData = await summaryRes.json();
+                const summaryText = summaryData.summary || '';
+                const summaryPath = summaryData.summary_path;
+
+                // 4) 퀴즈 생성
+                const quizRes = await fetch('/api/quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: summaryText, summary_path: summaryPath })
+                });
+                if (!quizRes.ok) throw new Error('퀴즈 생성 실패');
+                const quizData = await quizRes.json();
+
+                // UI 반영
+                documentTitle.textContent = `🎉 변환 완료: ${file.name}`;
+                document.getElementById('keywordResult').innerHTML = `<strong>키워드:</strong> 자동 생성`;
+                document.getElementById('summaryResult').innerHTML = `<strong>요약:</strong> ${summaryText || '요약 결과 없음'}`;
+                document.getElementById('conversionResult').textContent = transcriptText || '변환된 텍스트가 없습니다.';
+
+                const quizResult = document.getElementById('quizResult');
+                quizResult.innerHTML = '';
+                const quizLines = (quizData.quiz || '').split('\n').filter(Boolean);
+                let currentQuestion = null;
+                quizLines.forEach((line, idx) => {
+                    if (line.startsWith('Q')) {
+                        currentQuestion = document.createElement('div');
+                        currentQuestion.className = 'quiz-item';
+                        const p = document.createElement('p');
+                        p.textContent = line;
+                        currentQuestion.appendChild(p);
+                        const textarea = document.createElement('textarea');
+                        textarea.className = 'quiz-input';
+                        textarea.placeholder = '여기에 정답을 입력하세요...';
+                        currentQuestion.appendChild(textarea);
+                        const score = document.createElement('div');
+                        score.className = 'score-result';
+                        currentQuestion.appendChild(score);
+                        quizResult.appendChild(currentQuestion);
+                    } else if (line.startsWith('A') && currentQuestion) {
+                        const answer = document.createElement('div');
+                        answer.className = 'answer-area';
+                        answer.textContent = line;
+                        currentQuestion.appendChild(answer);
+                    }
+                });
+
+                document.getElementById('documentIndex').style.display = 'flex';
+                showDocumentContent('summary_source', document.querySelector('[data-index-type="summary_source"]'));
+            } catch (err) {
+                alert(`❌ 변환 중 오류가 발생했습니다.\n${err.message}`);
             }
         }
 
