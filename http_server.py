@@ -5,13 +5,19 @@ import re
 import socket
 import threading
 import time
-from typing import Dict, List, Tuple
+import urllib.error
+import urllib.request
+from typing import Dict, List, Optional, Tuple
 
 HOST = "0.0.0.0"
 PORT = 8080
 DATA_DIR = "data"
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 STORE_PATH = os.path.join(DATA_DIR, "store.json")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1").rstrip("/")
+OPENAI_CHAT_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+OPENAI_TRANSCRIBE_MODEL = os.getenv("OPENAI_TRANSCRIBE_MODEL", "whisper-1")
 
 STATUS_TEXT = {
     200: "OK",
@@ -108,13 +114,60 @@ def send_response(conn: socket.socket, status: int, headers: Dict[str, str], bod
     conn.sendall(response)
 
 
+def call_openai_chat(messages: List[Dict[str, str]], max_tokens: int = 400) -> Optional[str]:
+    if not OPENAI_API_KEY:
+        return None
+    payload = {
+        "model": OPENAI_CHAT_MODEL,
+        "messages": messages,
+        "temperature": 0.3,
+        "max_tokens": max_tokens,
+    }
+    data = json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(
+        f"{OPENAI_API_BASE}/chat/completions",
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=60) as resp:
+            result = json.load(resp)
+            return result.get("choices", [{}])[0].get("message", {}).get("content")
+    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+        return None
+
+
 def summarize_text(text: str, limit: int = 2) -> str:
+    if OPENAI_API_KEY:
+        prompt = [
+            {
+                "role": "system",
+                "content": "주어진 학습 자료를 3문장 이내로 한국어 요약하세요.",
+            },
+            {"role": "user", "content": text[:8000]},
+        ]
+        summary = call_openai_chat(prompt, max_tokens=300)
+        if summary:
+            return summary.strip()
     sentences = re.split(r"(?<=[.!?])\s+", text.strip())
     summary = " ".join(sentences[:limit]).strip()
     return summary or text[:200]
 
 
 def extract_keywords(text: str, top_k: int = 5) -> List[str]:
+    if OPENAI_API_KEY:
+        prompt = [
+            {"role": "system", "content": "주요 키워드를 쉼표로 구분하여 최대 5개만 출력하세요."},
+            {"role": "user", "content": text[:8000]},
+        ]
+        keywords = call_openai_chat(prompt, max_tokens=100)
+        if keywords:
+            cleaned = [k.strip() for k in keywords.replace("\n", ",").split(",") if k.strip()]
+            if cleaned:
+                return cleaned[:top_k]
     words = re.findall(r"[A-Za-z가-힣]{3,}", text.lower())
     freq = {}
     for w in words:
@@ -124,6 +177,32 @@ def extract_keywords(text: str, top_k: int = 5) -> List[str]:
 
 
 def generate_quizzes(text: str, count: int = 3) -> List[Dict[str, str]]:
+    if OPENAI_API_KEY:
+        prompt = [
+            {
+                "role": "system",
+                "content": "학습 텍스트에서 객관식/주관식 혼합 문제를 JSON 리스트로 생성하세요. 각 항목은 question, answer, explanation 키를 포함합니다. 한국어로 작성하세요.",
+            },
+            {"role": "user", "content": f"문제 개수: {count}. 원문: {text[:8000]}"},
+        ]
+        completion = call_openai_chat(prompt, max_tokens=800)
+        if completion:
+            try:
+                data = json.loads(completion)
+                parsed = []
+                for idx, item in enumerate(data[:count]):
+                    parsed.append(
+                        {
+                            "id": idx + 1,
+                            "question": item.get("question", ""),
+                            "answer": item.get("answer", ""),
+                            "explanation": item.get("explanation", ""),
+                        }
+                    )
+                if parsed:
+                    return parsed
+            except json.JSONDecodeError:
+                pass
     sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if len(s.strip()) > 10]
     quizzes = []
     keywords = extract_keywords(text, top_k=count * 2 or 6)
@@ -131,12 +210,14 @@ def generate_quizzes(text: str, count: int = 3) -> List[Dict[str, str]]:
         sentence = sentences[idx % len(sentences)]
         keyword = keywords[idx] if idx < len(keywords) else f"키워드{idx + 1}"
         question = sentence.replace(keyword, "____") if keyword in sentence else f"다음 문장을 요약하세요: {sentence}"
-        quizzes.append({
-            "id": idx + 1,
-            "question": question,
-            "answer": keyword,
-            "explanation": sentence,
-        })
+        quizzes.append(
+            {
+                "id": idx + 1,
+                "question": question,
+                "answer": keyword,
+                "explanation": sentence,
+            }
+        )
     return quizzes
 
 
@@ -177,6 +258,30 @@ def transcribe_file(filename: str, data: bytes) -> str:
         ext = os.path.splitext(filename)[1].lower()
         if ext in {".txt", ".md"}:
             return data.decode("utf-8", errors="ignore")
+        if OPENAI_API_KEY:
+            boundary = f"----WebKitFormBoundary{int(time.time() * 1000)}"
+            body_parts = [
+                f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"{filename}\"\r\nContent-Type: application/octet-stream\r\n\r\n".encode("utf-8"),
+                data,
+                b"\r\n",
+                f"--{boundary}\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\n{OPENAI_TRANSCRIBE_MODEL}\r\n".encode("utf-8"),
+                f"--{boundary}\r\nContent-Disposition: form-data; name=\"response_format\"\r\n\r\ntext\r\n".encode("utf-8"),
+                f"--{boundary}--\r\n".encode("utf-8"),
+            ]
+            body = b"".join(body_parts)
+            request = urllib.request.Request(
+                f"{OPENAI_API_BASE}/audio/transcriptions",
+                data=body,
+                headers={
+                    "Content-Type": f"multipart/form-data; boundary={boundary}",
+                    "Authorization": f"Bearer {OPENAI_API_KEY}",
+                },
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=120) as resp:
+                    return resp.read().decode("utf-8")
+            except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError):
+                pass
         return f"[STT 변환 예시] {filename}의 음성에서 추출된 텍스트입니다. (데모 모드)"
     except Exception:
         return "파일을 텍스트로 변환하지 못했습니다."
