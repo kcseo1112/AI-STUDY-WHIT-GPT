@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 기반 학습 지원 도구 - 최종 버전</title>
+    <style>
+        /* === 전체 기본 설정 === */
+        * {
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Segoe UI', 'Malgun Gothic', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: #f5f5f5;
+            display: flex; 
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* === 사이드바 스타일 개선 === */
+        .sidebar { 
+            width: 300px; 
+            background: #ffffff;
+            padding: 0; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
+            overflow-y: auto;
+            flex-shrink: 0;
+            border-right: 2px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: #333333;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+
+        .sidebar h3 { 
+            color: #333; 
+            margin: 20px 20px 15px; 
+            font-size: 1.1em; 
+            font-weight: 600;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        /* 기능 버튼 메뉴 스타일 개선 */
+        #actionMenu {
+            padding: 15px 20px;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f8f9fa;
+        }
+
+        .action-button {
+            padding: 12px 16px;
+            background: #333333;
+            border: 1px solid #555555;
+            color: #ffffff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .action-button:hover { 
+            background: #555555;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+        }
+
+        /* 프로젝트 목록 스타일 개선 */
+        .project-header, .folder-item, .file-item { 
+            padding: 12px 20px; 
+            cursor: pointer; 
+            font-size: 0.95em; 
+            color: #333;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-left: 3px solid transparent;
+        }
+
+        .project-header:hover, .folder-item:hover, .file-item:hover {
+            background-color: #f0f0f0;
+            border-left-color: #333333;
+            padding-left: 25px;
+        }
+
+        .folder-item {
+            padding-left: 30px;
+            font-weight: 500;
+        }
+
+        .file-item {
+            padding-left: 40px;
+            color: #555;
+        }
+
+        .file-item.active { 
+            background: #e8e8e8;
+            color: #333333; 
+            font-weight: 600;
+            border-left-color: #333333;
+        }
+
+        /* 컨텍스트 메뉴 스타일 */
+        .context-menu {
+            display: none;
+            position: fixed;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 180px;
+            padding: 4px 0;
+            font-size: 0.9em;
+        }
+
+        .context-menu-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-menu-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 4px 0;
+        }
+
+        /* 사용자 폴더 항목 스타일 */
+        .user-folder-item {
+            position: relative;
+        }
+
+        /* 선택된 폴더 스타일 */
+        .folder-item.selected,
+        .project-header.selected {
+            background-color: #3498db !important;
+            color: #ffffff !important;
+            border-left-color: #2980b9 !important;
+        }
+
+        /* 비활성화된 버튼 스타일 */
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #ccc !important;
+        }
+
+        .action-button:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* === 메인 콘텐츠 영역 개선 === */
+        .main-content { 
+            flex-grow: 1; 
+            padding: 30px 50px; 
+            overflow-y: auto; 
+            background: #ffffff; 
+            box-sizing: border-box;
+        }
+
+        .document-viewer { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .document-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #e0e0e0;
+        }
+
+        .document-viewer h1 { 
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+
+        .document-meta {
+            color: #777;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .document-meta strong {
+            color: #555;
+        }
+        
+        /* 인덱스 메뉴 스타일 개선 */
+        #documentIndex { 
+            margin-bottom: 30px; 
+            border-bottom: 2px solid #e0e0e0; 
+            padding-bottom: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .index-button { 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            border: none; 
+            background: #f0f0f0;
+            font-weight: 500; 
+            color: #666; 
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+
+        .index-button:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .index-button.active { 
+            background: #333333;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* 결과 섹션 스타일 개선 */
+        .result-section { 
+            margin-bottom: 40px; 
+            padding: 25px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 12px; 
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .result-section h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.3em;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .result-section p {
+            line-height: 1.8;
+            color: #555;
+            margin: 15px 0;
+        }
+
+        /* 액션 폼 스타일 개선 */
+        .action-form { 
+            display: none; 
+            padding: 25px; 
+            border: 2px solid #999999; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            background: #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .action-form h2 {
+            margin-top: 0;
+            color: #333333;
+            font-size: 1.4em;
+        }
+
+        .action-form label {
+            display: block;
+            margin: 15px 0 8px 0;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        .action-form input[type="file"],
+        .action-form input[type="number"],
+        .action-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .action-form input[type="file"]:focus,
+        .action-form input[type="number"]:focus,
+        .action-form textarea:focus {
+            outline: none;
+            border-color: #333333;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+
+        .action-form button {
+            padding: 12px 24px;
+            background: #333333;
+            color: #ffffff;
+            border: 1px solid #555555;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .action-form button:hover {
+            background: #555555;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .action-form hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 20px 0;
+        }
+
+        /* 폴더 관리 섹션 스타일 */
+        .folder-section {
+            display: none;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+
+        .folder-section.active {
+            display: block;
+        }
+
+        .folder-section h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.2em;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .folder-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .folder-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: #f0f0f0;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+
+        .folder-tab:hover {
+            background: #e0e0e0;
+        }
+
+        .folder-tab.active {
+            background: #333333;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* 퀴즈 항목 스타일 개선 */
+        .quiz-item { 
+            margin-bottom: 25px; 
+            padding: 20px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 10px; 
+            background: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .quiz-item:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .quiz-item p { 
+            margin: 0 0 15px 0; 
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .quiz-input { 
+            width: 100%; 
+            min-height: 80px; 
+            padding: 12px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            resize: vertical;
+            font-family: inherit;
+            font-size: 0.95em;
+            transition: border-color 0.3s ease;
+        }
+
+        .quiz-input:focus {
+            outline: none;
+            border-color: #333333;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+
+        .answer-area { 
+            margin-top: 15px; 
+            padding: 15px; 
+            border: 2px solid #999999; 
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .answer-area strong { 
+            color: #333333; 
+            margin-right: 10px; 
+        }
+
+        .score-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .score-button {
+            background: #333333;
+            color: #ffffff;
+            margin-top: 20px;
+            padding: 14px 28px;
+            font-size: 1em;
+            font-weight: 600;
+            border: 1px solid #555555;
+        }
+
+        .score-button:hover {
+            background: #555555;
+        }
+
+        .score-display {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border: 2px solid #999999;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* 스크롤바 스타일 개선 */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #999999;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666666;
+        }
+
+        /* 로그인 모달 스타일 */
+        .login-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-modal-content {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-modal-content h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .login-modal-content label {
+            display: block;
+            margin: 15px 0 8px 0;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        .login-modal-content input[type="text"],
+        .login-modal-content input[type="email"],
+        .login-modal-content input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .login-modal-content input:focus {
+            outline: none;
+            border-color: #333333;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+
+        .login-status {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .login-status strong {
+            color: #333;
+        }
+
+        .logout-button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .logout-button:hover {
+            background: #555;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .document-viewer {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 로그인 모달 -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-modal-content">
+            <h2>🔐 로그인</h2>
+            <label for="loginUsername">사용자명</label>
+            <input type="text" id="loginUsername" placeholder="사용자명을 입력하세요">
+            
+            <label for="loginEmail">이메일</label>
+            <input type="email" id="loginEmail" placeholder="이메일을 입력하세요">
+            
+            <label for="loginPassword">비밀번호</label>
+            <input type="password" id="loginPassword" placeholder="비밀번호를 입력하세요">
+            
+            <button type="button" class="action-button" onclick="handleLogin()" style="width: 100%; margin-top: 10px;">로그인</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>🚀 AI 학습 지원 도구</h2>
+        </div>
+
+        <div id="loginStatus" class="login-status" style="display: none;">
+            <strong>로그인:</strong> <span id="loggedInEmail"></span>
+            <button class="logout-button" onclick="handleLogout()">로그아웃</button>
+        </div>
+
+        <h3>🎯 AI 액션 메뉴</h3>
+        <div id="actionMenu">
+            <button class="action-button" onclick="showActionForm('convertForm')">🎙️ 녹음 파일 변환</button> 
+        </div>
+
+        <h3>📁 폴더 관리</h3>
+        <div id="folderMenu" style="display: flex; flex-direction: column; gap: 8px; padding: 0 20px; margin-bottom: 15px;">
+            <button id="addFolderBtn" class="action-button" onclick="quickAddFolder()" style="padding: 8px 12px; font-size: 0.85em;">➕ 새 폴더</button>
+            <button id="renameFolderBtn" class="action-button" onclick="renameSelectedFolder()" style="padding: 8px 12px; font-size: 0.85em;" disabled>✏️ 이름 변경</button>
+            <button id="deleteFolderBtn" class="action-button" onclick="deleteSelectedFolder()" style="padding: 8px 12px; font-size: 0.85em;" disabled>🗑️ 삭제</button>
+        </div>
+
+        <h3>📚 페이지 기록</h3>
+        <div id="historyList">
+            <!-- 사용자 폴더는 로그인 후 동적으로 추가됨 -->
+        </div>
+
+    </div>
+
+    <div class="main-content">
+        <div class="document-viewer">
+            <div class="document-header">
+                <h1 id="documentTitle">1주차: AI 개요 요약</h1>
+            </div>
+            
+            <div id="documentIndex" style="display: none;">
+                <button class="index-button active" data-index-type="summary_source" onclick="showDocumentContent('summary_source', this)">📝 요약 정리</button>
+                <button class="index-button" data-index-type="quiz" onclick="showDocumentContent('quiz', this)">❓ 퀴즈</button>
+            </div>
+
+            <div id="convertForm" class="action-form">
+                <h2>🎙️ 녹음 파일 변환</h2>
+                <p style="color: #666; margin-bottom: 20px;">로컬 파일을 서버로 전송하여 텍스트로 변환하고 새로운 기록으로 저장합니다.</p>
+                <label for="audioFile_convert">변환할 녹음 파일 선택 (.mp3, .wav 등)</label>
+                <input type="file" id="audioFile_convert" accept="audio/*">
+                <button type="button" onclick="handleConvert()">📤 텍스트로 변환 및 문서 저장</button>
+            </div>
+
+
+            <div class="result-section" data-section="summary_source" style="display: none;">
+                <h3>🔑 주요 키워드 및 핵심 요약</h3>
+                <p id="keywordResult"><strong>키워드:</strong> AI, 머신러닝, 딥러닝, LLM, NLP</p>
+                <p id="summaryResult"><strong>요약:</strong> 인공지능(AI)은 학습, 추론 능력을 컴퓨터로 구현한 기술입니다. 최근 딥러닝과 LLM이 발전을 주도하고 있습니다.</p>
+                <hr style="margin: 20px 0;">
+                <h3>📜 변환 및 원본 텍스트</h3>
+                <p id="conversionResult">AI 기술은 인간의 학습 능력, 추론 능력, 지각 능력을 컴퓨터 프로그램으로 구현한 기술입니다. 본 강의에서는 AI의 역사적 발전, 머신러닝의 기본 원리, 그리고 다양한 응용 사례에 대해 다룹니다. 특히, 대규모 언어 모델(LLM)과 딥러닝이 최근 AI 발전을 주도하고 있음을 강조했습니다.</p>
+            </div>
+            
+            <div class="result-section" data-section="quiz" style="display: none;">
+                <h3>❓ 예상 문제</h3>
+                <div id="quizResult">
+                    
+                    <div class="quiz-item" data-correct-answer="학습 능력, 추론 능력, 지각 능력" data-quiz-id="q1">
+                        <p>1. 인공지능이 인간의 능력 중 모방하고자 하는 세 가지 능력은 무엇인가요? (주관식)</p>
+                        <textarea class="quiz-input" placeholder="여기에 정답을 입력하세요..."></textarea>
+                        <div class="score-result"></div> 
+                        <div class="answer-area">
+                            <strong>정답:</strong> 학습 능력, 추론 능력, 지각 능력
+                            <br><br>
+                            <strong>해설:</strong> AI의 기본적인 정의는 인간의 이 세 가지 능력을 컴퓨터 프로그램으로 구현하는 것입니다.
+                        </div>
+                    </div>
+
+                    <div class="quiz-item" data-correct-answer="대규모 언어 모델, 딥러닝" data-quiz-id="q2">
+                        <p>2. 최근 AI 발전을 주도하고 있는 두 가지 핵심 기술은? (주관식)</p>
+                        <textarea class="quiz-input" placeholder="여기에 정답을 입력하세요..."></textarea>
+                        <div class="score-result"></div>
+                        <div class="answer-area">
+                            <strong>정답:</strong> 대규모 언어 모델(LLM)과 딥러닝
+                            <br><br>
+                            <strong>해설:</strong> 딥러닝은 머신러닝의 한 분야로, LLM은 딥러닝을 활용한 대표적인 응용 사례입니다.
+                        </div>
+                    </div>
+                    
+                </div>
+                <hr style="margin: 30px 0;">
+                
+                <div id="finalScoreDisplay" class="score-display"></div>
+
+                <button class="score-button" onclick="scoreQuiz()">✅ 정답 확인 및 채점</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // === 전역 변수 ===
+        let currentUserEmail = null; // 현재 로그인한 사용자 이메일
+        
+        // === UI 기능 (JavaScript) ===
+        
+        // 0. 로그인/로그아웃 기능
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function hideLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        function handleLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !email || !password) {
+                alert('⚠️ 모든 필드를 입력해주세요.');
+                return;
+            }
+
+            if (window.javaApp) {
+                // Java Bridge 호출: 로그인 처리
+                const result = window.javaApp.login(username, email, password);
+                if (result) {
+                    currentUserEmail = email;
+                    updateLoginStatus();
+                    hideLoginModal();
+                } else {
+                    alert('⚠️ 로그인에 실패했습니다. 사용자명, 이메일, 비밀번호를 확인해주세요.');
+                }
+            } else {
+                // 더미 로그인 (테스트용)
+                currentUserEmail = email;
+                updateLoginStatus();
+                hideLoginModal();
+                alert(`✅ 로그인 성공!\n이메일: ${email}`);
+            }
+        }
+
+        function handleLogout() {
+            currentUserEmail = null;
+            updateLoginStatus();
+            showLoginModal();
+        }
+
+        function updateLoginStatus() {
+            const loginStatus = document.getElementById('loginStatus');
+            const loggedInEmail = document.getElementById('loggedInEmail');
+            
+            if (currentUserEmail) {
+                loginStatus.style.display = 'block';
+                loggedInEmail.textContent = currentUserEmail;
+            } else {
+                loginStatus.style.display = 'none';
+            }
+        }
+
+        function checkLogin() {
+            if (!currentUserEmail) {
+                showLoginModal();
+                return false;
+            }
+            return true;
+        }
+
+        // 폴더 관리 탭 전환 기능
+        function switchFolderTab(section, buttonElement) {
+            // 모든 탭 비활성화
+            document.querySelectorAll('.folder-tab').forEach(tab => tab.classList.remove('active'));
+            // 모든 섹션 숨기기
+            document.querySelectorAll('.folder-section').forEach(section => section.classList.remove('active'));
+            
+            // 선택한 탭 활성화
+            buttonElement.classList.add('active');
+            // 선택한 섹션 표시
+            document.getElementById(`folder${section.charAt(0).toUpperCase() + section.slice(1)}Section`).classList.add('active');
+        }
+
+        // 간단한 폴더 추가 함수 (client_js.js의 함수 사용)
+        function quickAddFolder() {
+            if (typeof window.quickAddFolder === 'function') {
+                window.quickAddFolder();
+            } else if (window.javaApp) {
+                if (!checkLogin()) return;
+                const folderName = prompt('추가할 폴더 이름을 입력하세요:');
+                if (folderName && folderName.trim()) {
+                    window.javaApp.manageFolder('create', folderName.trim(), currentUserEmail);
+                }
+            } else {
+                alert('⚠️ 폴더 추가 기능을 사용할 수 없습니다.');
+            }
+        }
+
+        // 간단한 폴더 수정 함수 (client_js.js의 함수 사용)
+        function quickEditFolder() {
+            if (typeof window.quickEditFolder === 'function') {
+                window.quickEditFolder();
+            } else if (window.javaApp) {
+                if (!checkLogin()) return;
+                const oldFolderName = prompt('수정할 폴더 이름을 입력하세요:');
+                if (oldFolderName && oldFolderName.trim()) {
+                    const newFolderName = prompt('새 폴더 이름을 입력하세요:');
+                    if (newFolderName && newFolderName.trim()) {
+                        window.javaApp.manageFolder('update', oldFolderName.trim(), currentUserEmail, newFolderName.trim());
+                    }
+                }
+            } else {
+                alert('⚠️ 폴더 수정 기능을 사용할 수 없습니다.');
+            }
+        }
+
+        // 간단한 폴더 삭제 함수 (client_js.js의 함수 사용)
+        function quickDeleteFolder() {
+            if (typeof window.quickDeleteFolder === 'function') {
+                window.quickDeleteFolder();
+            } else if (window.javaApp) {
+                if (!checkLogin()) return;
+                const folderName = prompt('삭제할 폴더 이름을 입력하세요:');
+                if (folderName && folderName.trim()) {
+                    if (confirm(`⚠️ 정말로 "${folderName}" 폴더를 삭제하시겠습니까?`)) {
+                        window.javaApp.manageFolder('delete', folderName.trim(), currentUserEmail);
+                    }
+                }
+            } else {
+                alert('⚠️ 폴더 삭제 기능을 사용할 수 없습니다.');
+            }
+        }
+
+        // 선택한 폴더 관리
+        let selectedFolderName = null;
+        let selectedFolderElement = null;
+
+        // 폴더 선택 함수
+        function selectFolder(folderElement, folderName) {
+            // 기존 선택 해제
+            if (selectedFolderElement) {
+                selectedFolderElement.classList.remove('selected');
+            }
+            
+            // 새 선택
+            selectedFolderElement = folderElement;
+            selectedFolderName = folderName;
+            folderElement.classList.add('selected');
+            
+            // 버튼 활성화
+            const renameBtn = document.getElementById('renameFolderBtn');
+            const deleteBtn = document.getElementById('deleteFolderBtn');
+            if (renameBtn) renameBtn.disabled = false;
+            if (deleteBtn) deleteBtn.disabled = false;
+        }
+
+        // 선택 해제 함수
+        function deselectFolder() {
+            if (selectedFolderElement) {
+                selectedFolderElement.classList.remove('selected');
+            }
+            selectedFolderElement = null;
+            selectedFolderName = null;
+            
+            // 버튼 비활성화
+            const renameBtn = document.getElementById('renameFolderBtn');
+            const deleteBtn = document.getElementById('deleteFolderBtn');
+            if (renameBtn) renameBtn.disabled = true;
+            if (deleteBtn) deleteBtn.disabled = true;
+        }
+
+        // 선택한 폴더 이름 변경
+        function renameSelectedFolder() {
+            if (!selectedFolderName) {
+                alert('폴더를 선택해주세요.');
+                return;
+            }
+            
+            if (typeof window.contextMenuRenameFolder === 'function') {
+                window.contextMenuRenameFolder(selectedFolderName);
+            } else if (typeof window.quickEditFolder === 'function') {
+                window.quickEditFolder();
+            }
+        }
+
+        // 선택한 폴더 삭제
+        function deleteSelectedFolder() {
+            if (!selectedFolderName) {
+                alert('폴더를 선택해주세요.');
+                return;
+            }
+            
+            if (typeof window.contextMenuDeleteFolder === 'function') {
+                window.contextMenuDeleteFolder(selectedFolderName);
+            } else if (typeof window.quickDeleteFolder === 'function') {
+                window.quickDeleteFolder();
+            }
+        }
+
+        // 문서 클릭 시 선택 해제
+        document.addEventListener('click', function(e) {
+            // 폴더 항목이나 버튼이 아닌 곳을 클릭하면 선택 해제
+            if (!e.target.closest('.user-folder-item') && 
+                !e.target.closest('#folderMenu') &&
+                !e.target.closest('#contextMenu')) {
+                if (typeof deselectFolder === 'function') {
+                    deselectFolder();
+                }
+            }
+        });
+        
+        // 1. 폴더 토글 기능
+        function toggleFolder(id) {
+            const folder = document.getElementById(id);
+            const header = document.querySelector(`.project-header[onclick*="${id}"], .folder-item[onclick*="${id}"]`);
+            if (folder.style.display === 'none') {
+                folder.style.display = 'block';
+                if (header) header.textContent = header.textContent.replace('▶', '▼');
+            } else {
+                folder.style.display = 'none';
+                if (header) header.textContent = header.textContent.replace('▼', '▶');
+            }
+        }
+        
+        // 2. 액션 폼 토글 기능
+        function showActionForm(formId) { 
+             const targetForm = document.getElementById(formId);
+             const isCurrentlyVisible = targetForm.style.display === 'block';
+             
+             document.querySelectorAll('.action-form').forEach(form => {
+                if (form.id === formId) {
+                    form.style.display = isCurrentlyVisible ? 'none' : 'block';
+                } else {
+                    form.style.display = 'none'; 
+                }
+            });
+            
+            // 액션 폼을 열 때는 문서 내용 숨기기, 닫을 때는 다시 보이기
+            const documentHeader = document.querySelector('.document-header');
+            if (!isCurrentlyVisible) {
+                // 액션 폼 열기: 문서 내용 숨기기 (제목, 인덱스 버튼, 결과 섹션 모두)
+                if (documentHeader) documentHeader.style.display = 'none';
+                document.getElementById('documentIndex').style.display = 'none';
+                document.querySelectorAll('.result-section').forEach(section => {
+                    section.style.display = 'none';
+                });
+            } else {
+                // 액션 폼 닫기: 현재 선택된 문서가 있으면 다시 보이기
+                const activeFile = document.querySelector('.file-item.active');
+                if (activeFile) {
+                    if (documentHeader) documentHeader.style.display = 'block';
+                    document.getElementById('documentIndex').style.display = 'flex';
+                    showDocumentContent('summary_source', document.querySelector('.index-button[data-index-type="summary_source"]'));
+                }
+            }
+        }
+        
+        // 3. 문서 내용 필터링 기능
+        function showDocumentContent(contentType, buttonElement) {
+            document.querySelectorAll('.index-button').forEach(btn => btn.classList.remove('active'));
+            buttonElement.classList.add('active');
+
+            document.querySelectorAll('.result-section').forEach(section => {
+                if (section.getAttribute('data-section') === contentType) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        }
+
+        // 4. 파일 로드 기능 (기록 로드)
+        function loadFile(fileId) {
+            document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+            const activeItem = document.querySelector(`.file-item[data-file-id="${fileId}"]`);
+            if (activeItem) { activeItem.classList.add('active'); }
+            
+            document.querySelectorAll('.action-form').forEach(form => form.style.display = 'none');
+            
+            // 문서 인덱스 버튼과 결과 섹션 표시 (문서 클릭 시에만 보이도록)
+            document.getElementById('documentIndex').style.display = 'flex';
+            
+            // 퀴즈 섹션 초기화 (정답/점수 숨김)
+            document.querySelectorAll('.answer-area').forEach(area => area.style.display = 'none');
+            document.querySelectorAll('.score-result').forEach(result => {
+                result.textContent = '';
+                result.style.color = '';
+            });
+            document.getElementById('finalScoreDisplay').style.display = 'none';
+            document.querySelectorAll('.quiz-input').forEach(input => input.value = ''); // 사용자 입력 초기화
+
+            if (window.javaApp) {
+                // Java Bridge 호출: 서버에서 파일 내용을 요청
+                window.javaApp.loadFileContent(fileId);
+            } else {
+                // 더미 데이터 업데이트
+                const title = activeItem ? activeItem.textContent : 'AI 학습 도구';
+                document.getElementById('documentTitle').textContent = title;
+            }
+            // 새로운 파일을 로드하면 기본적으로 'summary_source' 뷰를 표시
+            showDocumentContent('summary_source', document.querySelector('.index-button[data-index-type="summary_source"]'));
+        }
+
+        // 5. 채점 기능
+        function scoreQuiz() {
+            const quizItems = document.querySelectorAll('.quiz-item');
+            let totalCorrect = 0;
+            let totalQuestions = quizItems.length;
+
+            quizItems.forEach(item => {
+                const userInput = item.querySelector('.quiz-input').value.trim().toLowerCase().replace(/[\s.,()]/g, '');
+                const correctAnswer = item.getAttribute('data-correct-answer').toLowerCase().replace(/[\s.,()]/g, '');
+                const answerArea = item.querySelector('.answer-area');
+                const scoreResult = item.querySelector('.score-result');
+                
+                // 정답 및 해설을 보이게 합니다.
+                answerArea.style.display = 'block';
+
+                // 간단한 채점 로직: 정답 키워드 포함 여부 확인
+                const keywords = correctAnswer.split(',').map(k => k.trim());
+                const isCorrect = keywords.some(keyword => userInput.includes(keyword)); 
+
+                if (isCorrect && userInput.length > 5) { // 최소 글자수 조건 추가 (간이 체크)
+                    scoreResult.textContent = '✅ 정답입니다!';
+                    scoreResult.style.color = '#333333';
+                    scoreResult.style.background = '#e8e8e8';
+                    scoreResult.style.border = '1px solid #999999';
+                    totalCorrect++;
+                } else {
+                    scoreResult.textContent = '❌ 오답입니다. 정답을 확인해주세요.';
+                    scoreResult.style.color = '#333333';
+                    scoreResult.style.background = '#f5f5f5';
+                    scoreResult.style.border = '1px solid #999999';
+                }
+            });
+
+            // 최종 점수 표시
+            const finalScoreDisplay = document.getElementById('finalScoreDisplay');
+            const percentage = ((totalCorrect / totalQuestions) * 100).toFixed(0);
+            finalScoreDisplay.textContent = `🎯 최종 점수: ${totalCorrect} / ${totalQuestions} 문제 (${percentage}점)`;
+            finalScoreDisplay.style.display = 'block';
+            
+            // Java Bridge 호출: 채점 결과를 서버에 전송하여 학습 기록에 반영
+            if (window.javaApp) {
+                window.javaApp.saveScore(totalCorrect, totalQuestions);
+            }
+        }
+
+
+        // 6. 통신 요청 핸들러 (Java Bridge 호출)
+
+        function handleConvert() {
+            const fileInput = document.getElementById('audioFile_convert');
+            if (fileInput.files.length === 0) { 
+                alert('⚠️ 오디오 파일을 선택해주세요.'); 
+                return; 
+            }
+            const file = fileInput.files[0];
+            
+            if (window.javaApp) { 
+                window.javaApp.convertAudio(file.path, file.name); 
+            } else { 
+                alert(`📤 [변환 요청] 파일: ${file.name}\n\n(Java->Python STT 로직 구현 필요)`); 
+                showActionForm('convertForm');
+            }
+        }
+
+        function handleFolderAdd() {
+            if (!checkLogin()) return;
+            
+            const folderName = document.getElementById('folderName_add').value.trim();
+            
+            if (!folderName) {
+                alert('⚠️ 폴더 이름을 입력해주세요.');
+                return;
+            }
+            
+            if (window.javaApp) {
+                window.javaApp.manageFolder('create', folderName, currentUserEmail);
+            } else {
+                // 더미 응답
+                const resultDiv = document.getElementById('folderAddResult');
+                const resultContent = document.getElementById('folderAddResultContent');
+                resultDiv.style.display = 'block';
+                resultContent.innerHTML = `
+                    <p><strong>작업:</strong> 폴더 추가</p>
+                    <p><strong>폴더 이름:</strong> ${folderName}</p>
+                    <p><strong>이메일:</strong> ${currentUserEmail}</p>
+                    <p><strong>처리 결과:</strong> ✅ 성공적으로 추가되었습니다.</p>
+                `;
+            }
+        }
+
+        function handleFolderUpdate() {
+            if (!checkLogin()) return;
+            
+            const oldFolderName = document.getElementById('folderName_old').value.trim();
+            const newFolderName = document.getElementById('folderName_new').value.trim();
+            
+            if (!oldFolderName || !newFolderName) {
+                alert('⚠️ 기존 폴더 이름과 새 폴더 이름을 모두 입력해주세요.');
+                return;
+            }
+            
+            if (window.javaApp) {
+                window.javaApp.manageFolder('update', oldFolderName, currentUserEmail, newFolderName);
+            } else {
+                // 더미 응답
+                const resultDiv = document.getElementById('folderUpdateResult');
+                const resultContent = document.getElementById('folderUpdateResultContent');
+                resultDiv.style.display = 'block';
+                resultContent.innerHTML = `
+                    <p><strong>작업:</strong> 폴더 수정</p>
+                    <p><strong>기존 폴더 이름:</strong> ${oldFolderName}</p>
+                    <p><strong>새 폴더 이름:</strong> ${newFolderName}</p>
+                    <p><strong>이메일:</strong> ${currentUserEmail}</p>
+                    <p><strong>처리 결과:</strong> ✅ 성공적으로 수정되었습니다.</p>
+                `;
+            }
+        }
+
+        function handleFolderDelete() {
+            if (!checkLogin()) return;
+            
+            const folderName = document.getElementById('folderName_delete').value.trim();
+            
+            if (!folderName) {
+                alert('⚠️ 폴더 이름을 입력해주세요.');
+                return;
+            }
+            
+            if (!confirm(`⚠️ 정말로 "${folderName}" 폴더를 삭제하시겠습니까?`)) {
+                return;
+            }
+            
+            if (window.javaApp) {
+                window.javaApp.manageFolder('delete', folderName, currentUserEmail);
+            } else {
+                // 더미 응답
+                const resultDiv = document.getElementById('folderDeleteResult');
+                const resultContent = document.getElementById('folderDeleteResultContent');
+                resultDiv.style.display = 'block';
+                resultContent.innerHTML = `
+                    <p><strong>작업:</strong> 폴더 삭제</p>
+                    <p><strong>폴더 이름:</strong> ${folderName}</p>
+                    <p><strong>이메일:</strong> ${currentUserEmail}</p>
+                    <p><strong>처리 결과:</strong> ✅ 성공적으로 삭제되었습니다.</p>
+                `;
+            }
+        }
+
+        function handleAnalyze(type) {
+            // analysisText 필드가 있으면 사용하고, 없으면 conversionResult 사용
+            const analysisTextEl = document.getElementById('analysisText');
+            const text = (analysisTextEl && analysisTextEl.value) || document.getElementById('conversionResult').textContent;
+            if (!text || text.includes('원본 텍스트가 여기에 로드됩니다')) { 
+                alert('⚠️ 분석할 텍스트를 입력하거나 파일을 로드하세요.'); 
+                return; 
+            }
+
+            if (type === 'quiz') {
+                const countEl = document.getElementById('questionCount');
+                if (!countEl) {
+                    alert('⚠️ 문제 생성 기능은 현재 사용할 수 없습니다.'); 
+                    return;
+                }
+                const count = countEl.value;
+                if (parseInt(count) <= 0) { 
+                    alert('⚠️ 생성할 문제 수를 1개 이상 입력해주세요.'); 
+                    return; 
+                }
+                
+                if (window.javaApp) { 
+                    window.javaApp.generateQuiz(text, parseInt(count)); 
+                } else { 
+                    alert(`📝 [문제 생성 요청] ${count}개 문제\n\n(Java->Python AI 로직 구현 필요)`); 
+                }
+
+            } else {
+                // 요약 및 키워드 분석
+                if (window.javaApp) { 
+                    window.javaApp.analyzeText(type, text); 
+                } else { 
+                    alert(`📊 [${type === 'keyword' ? '키워드 추출' : '핵심 요약'} 분석 요청]\n\n(Java->Python NLP 로직 구현 필요)`); 
+                }
+            }
+        }
+
+        // 7. 초기 설정
+        window.onload = function() {
+            // 초기에는 문서를 로드하지 않음 (문서 클릭 시에만 표시)
+            document.getElementById('documentTitle').textContent = 'AI 학습 지원 도구';
+            
+            // 로그인 모달 표시
+            showLoginModal();
+            
+            // 모달 외부 클릭 시 닫기
+            document.getElementById('loginModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    // 로그인하지 않은 상태에서는 모달을 닫을 수 없음
+                    if (!currentUserEmail) {
+                        alert('⚠️ 로그인이 필요합니다.');
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
