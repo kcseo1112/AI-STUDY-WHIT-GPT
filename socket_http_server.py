@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import socket
 import threading
 import time
@@ -190,8 +191,25 @@ def handle_transcribe(body: bytes) -> bytes:
     if not target_file.exists():
         return http_response(404, {"Content-Type": "application/json"}, b'{"error":"file not found"}')
 
-    model = load_whisper_model()
-    result = model.transcribe(str(target_file))
+    if shutil.which("ffmpeg") is None:
+        error_message = {
+            "error": "ffmpeg가 설치되어 있지 않아 STT 변환을 실행할 수 없습니다. ffmpeg 설치 후 다시 시도하세요.",
+            "hint": "https://ffmpeg.org/download.html",
+        }
+        return http_response(500, {"Content-Type": "application/json; charset=utf-8"}, json.dumps(error_message, ensure_ascii=False).encode("utf-8"))
+
+    try:
+        model = load_whisper_model()
+        result = model.transcribe(str(target_file))
+    except FileNotFoundError as exc:
+        message = str(exc)
+        if "ffmpeg" in message.lower():
+            message = "ffmpeg 실행 파일을 찾을 수 없습니다. 시스템 PATH에 ffmpeg를 추가한 뒤 다시 시도하세요."
+        error_payload = json.dumps({"error": message}, ensure_ascii=False).encode("utf-8")
+        return http_response(500, {"Content-Type": "application/json; charset=utf-8"}, error_payload)
+    except Exception as exc:  # noqa: BLE001
+        error_payload = json.dumps({"error": str(exc)}, ensure_ascii=False).encode("utf-8")
+        return http_response(500, {"Content-Type": "application/json; charset=utf-8"}, error_payload)
     transcript_text = result.get("text", "")
 
     transcript_name = target_file.stem + "_transcript.txt"
