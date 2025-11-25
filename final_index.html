@@ -741,6 +741,70 @@
     <script>
         // === 전역 변수 ===
         let currentUserEmail = null; // 현재 로그인한 사용자 이메일
+        const apiBase = '';
+
+        async function apiRequest(path, options = {}) {
+            const response = await fetch(`${apiBase}${path}`, options);
+            const text = await response.text();
+            let data;
+            try { data = text ? JSON.parse(text) : {}; } catch { data = { error: text }; }
+            if (!response.ok) {
+                const message = data && data.error ? data.error : '요청을 처리할 수 없습니다.';
+                throw new Error(message);
+            }
+            return data;
+        }
+
+        function renderQuizItems(quizzes) {
+            const container = document.getElementById('quizResult');
+            container.innerHTML = '';
+            quizzes.forEach((quiz, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'quiz-item';
+                wrapper.setAttribute('data-quiz-id', quiz.id || idx + 1);
+                wrapper.setAttribute('data-correct-answer', quiz.answer || '');
+                wrapper.innerHTML = `
+                    <p>${idx + 1}. ${quiz.question}</p>
+                    <textarea class="quiz-input" placeholder="여기에 정답을 입력하세요..."></textarea>
+                    <div class="score-result"></div>
+                    <div class="answer-area" style="display:none;">
+                        <strong>정답:</strong> ${quiz.answer || '정답 준비 중'}<br><br>
+                        <strong>해설:</strong> ${quiz.explanation || '해설이 제공되지 않았습니다.'}
+                    </div>
+                `;
+                container.appendChild(wrapper);
+            });
+        }
+
+        function renderFileList(files) {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            files.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.dataset.fileId = file.id;
+                item.textContent = file.name;
+                item.onclick = () => {
+                    document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+                    item.classList.add('active');
+                    document.getElementById('documentTitle').textContent = file.name;
+                    document.getElementById('summaryResult').innerHTML = `<strong>요약:</strong> ${file.summary || ''}`;
+                    document.getElementById('documentIndex').style.display = 'flex';
+                    showDocumentContent('summary_source', document.querySelector('.index-button[data-index-type="summary_source"]'));
+                };
+                historyList.appendChild(item);
+            });
+        }
+
+        async function refreshFiles() {
+            if (!currentUserEmail) return;
+            try {
+                const data = await apiRequest(`/api/files?email=${encodeURIComponent(currentUserEmail)}`);
+                renderFileList(data.files || []);
+            } catch (err) {
+                console.warn('파일 목록을 불러오지 못했습니다:', err.message);
+            }
+        }
         
         // === UI 기능 (JavaScript) ===
         
@@ -763,23 +827,18 @@
                 return;
             }
 
-            if (window.javaApp) {
-                // Java Bridge 호출: 로그인 처리
-                const result = window.javaApp.login(username, email, password);
-                if (result) {
-                    currentUserEmail = email;
-                    updateLoginStatus();
-                    hideLoginModal();
-                } else {
-                    alert('⚠️ 로그인에 실패했습니다. 사용자명, 이메일, 비밀번호를 확인해주세요.');
-                }
-            } else {
-                // 더미 로그인 (테스트용)
+            apiRequest('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            })
+            .then(() => {
                 currentUserEmail = email;
                 updateLoginStatus();
                 hideLoginModal();
-                alert(`✅ 로그인 성공!\n이메일: ${email}`);
-            }
+                refreshFiles();
+            })
+            .catch(err => alert(`⚠️ 로그인 실패: ${err.message}`));
         }
 
         function handleLogout() {
@@ -1090,24 +1149,41 @@
         // 6. 통신 요청 핸들러 (Java Bridge 호출)
 
         function handleConvert() {
+            if (!checkLogin()) return;
             const fileInput = document.getElementById('audioFile_convert');
-            if (fileInput.files.length === 0) { 
-                alert('⚠️ 오디오 파일을 선택해주세요.'); 
-                return; 
-            }
             const file = fileInput.files[0];
-            
-            if (window.javaApp) { 
-                window.javaApp.convertAudio(file.path, file.name); 
-            } else { 
-                alert(`📤 [변환 요청] 파일: ${file.name}\n\n(Java->Python STT 로직 구현 필요)`); 
-                showActionForm('convertForm');
+            if (!file) {
+                alert('⚠️ 오디오 파일을 선택해주세요.');
+                return;
             }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch(`/api/upload?email=${encodeURIComponent(currentUserEmail)}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok) throw new Error(data.error || '업로드 실패');
+                const { file: uploaded, quizzes } = data;
+                document.getElementById('conversionResult').textContent = uploaded.text || '';
+                document.getElementById('summaryResult').innerHTML = `<strong>요약:</strong> ${uploaded.summary || ''}`;
+                document.getElementById('keywordResult').innerHTML = `<strong>키워드:</strong> ${(uploaded.keywords || []).join(', ')}`;
+                renderQuizItems(quizzes || []);
+                document.getElementById('documentTitle').textContent = uploaded.name;
+                document.getElementById('documentIndex').style.display = 'flex';
+                showDocumentContent('summary_source', document.querySelector('.index-button[data-index-type="summary_source"]'));
+                refreshFiles();
+                alert('✅ 업로드와 변환이 완료되었습니다.');
+            })
+            .catch(err => alert(`⚠️ 처리 실패: ${err.message}`));
         }
 
         function handleFolderAdd() {
             if (!checkLogin()) return;
-            
+
             const folderName = document.getElementById('folderName_add').value.trim();
             
             if (!folderName) {
@@ -1115,20 +1191,23 @@
                 return;
             }
             
-            if (window.javaApp) {
-                window.javaApp.manageFolder('create', folderName, currentUserEmail);
-            } else {
-                // 더미 응답
+            apiRequest(`/api/folders?email=${encodeURIComponent(currentUserEmail)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: folderName })
+            })
+            .then(data => {
                 const resultDiv = document.getElementById('folderAddResult');
                 const resultContent = document.getElementById('folderAddResultContent');
                 resultDiv.style.display = 'block';
                 resultContent.innerHTML = `
                     <p><strong>작업:</strong> 폴더 추가</p>
-                    <p><strong>폴더 이름:</strong> ${folderName}</p>
+                    <p><strong>폴더 이름:</strong> ${data.folder.name}</p>
                     <p><strong>이메일:</strong> ${currentUserEmail}</p>
-                    <p><strong>처리 결과:</strong> ✅ 성공적으로 추가되었습니다.</p>
+                    <p><strong>처리 결과:</strong> ✅ ${data.message}</p>
                 `;
-            }
+            })
+            .catch(err => alert(`⚠️ 폴더 추가 실패: ${err.message}`));
         }
 
         function handleFolderUpdate() {
@@ -1142,21 +1221,23 @@
                 return;
             }
             
-            if (window.javaApp) {
-                window.javaApp.manageFolder('update', oldFolderName, currentUserEmail, newFolderName);
-            } else {
-                // 더미 응답
+            apiRequest(`/api/folders?email=${encodeURIComponent(currentUserEmail)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: Number(oldFolderName) || oldFolderName, name: newFolderName })
+            })
+            .then(data => {
                 const resultDiv = document.getElementById('folderUpdateResult');
                 const resultContent = document.getElementById('folderUpdateResultContent');
                 resultDiv.style.display = 'block';
                 resultContent.innerHTML = `
                     <p><strong>작업:</strong> 폴더 수정</p>
-                    <p><strong>기존 폴더 이름:</strong> ${oldFolderName}</p>
-                    <p><strong>새 폴더 이름:</strong> ${newFolderName}</p>
-                    <p><strong>이메일:</strong> ${currentUserEmail}</p>
-                    <p><strong>처리 결과:</strong> ✅ 성공적으로 수정되었습니다.</p>
+                    <p><strong>폴더 ID:</strong> ${data.folder.id}</p>
+                    <p><strong>새 폴더 이름:</strong> ${data.folder.name}</p>
+                    <p><strong>처리 결과:</strong> ✅ ${data.message}</p>
                 `;
-            }
+            })
+            .catch(err => alert(`⚠️ 폴더 수정 실패: ${err.message}`));
         }
 
         function handleFolderDelete() {
@@ -1173,56 +1254,73 @@
                 return;
             }
             
-            if (window.javaApp) {
-                window.javaApp.manageFolder('delete', folderName, currentUserEmail);
-            } else {
-                // 더미 응답
+            apiRequest(`/api/folders?email=${encodeURIComponent(currentUserEmail)}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: Number(folderName) || folderName })
+            })
+            .then(data => {
                 const resultDiv = document.getElementById('folderDeleteResult');
                 const resultContent = document.getElementById('folderDeleteResultContent');
                 resultDiv.style.display = 'block';
                 resultContent.innerHTML = `
                     <p><strong>작업:</strong> 폴더 삭제</p>
-                    <p><strong>폴더 이름:</strong> ${folderName}</p>
-                    <p><strong>이메일:</strong> ${currentUserEmail}</p>
-                    <p><strong>처리 결과:</strong> ✅ 성공적으로 삭제되었습니다.</p>
+                    <p><strong>폴더:</strong> ${folderName}</p>
+                    <p><strong>처리 결과:</strong> ✅ ${data.message || '삭제 완료'}</p>
                 `;
-            }
+            })
+            .catch(err => alert(`⚠️ 폴더 삭제 실패: ${err.message}`));
         }
 
         function handleAnalyze(type) {
             // analysisText 필드가 있으면 사용하고, 없으면 conversionResult 사용
             const analysisTextEl = document.getElementById('analysisText');
             const text = (analysisTextEl && analysisTextEl.value) || document.getElementById('conversionResult').textContent;
-            if (!text || text.includes('원본 텍스트가 여기에 로드됩니다')) { 
-                alert('⚠️ 분석할 텍스트를 입력하거나 파일을 로드하세요.'); 
-                return; 
+            if (!text || text.includes('원본 텍스트가 여기에 로드됩니다')) {
+                alert('⚠️ 분석할 텍스트를 입력하거나 파일을 로드하세요.');
+                return;
             }
 
             if (type === 'quiz') {
                 const countEl = document.getElementById('questionCount');
                 if (!countEl) {
-                    alert('⚠️ 문제 생성 기능은 현재 사용할 수 없습니다.'); 
+                    alert('⚠️ 문제 생성 기능은 현재 사용할 수 없습니다.');
                     return;
                 }
                 const count = countEl.value;
-                if (parseInt(count) <= 0) { 
-                    alert('⚠️ 생성할 문제 수를 1개 이상 입력해주세요.'); 
-                    return; 
-                }
-                
-                if (window.javaApp) { 
-                    window.javaApp.generateQuiz(text, parseInt(count)); 
-                } else { 
-                    alert(`📝 [문제 생성 요청] ${count}개 문제\n\n(Java->Python AI 로직 구현 필요)`); 
+                if (parseInt(count) <= 0) {
+                    alert('⚠️ 생성할 문제 수를 1개 이상 입력해주세요.');
+                    return;
                 }
 
+                apiRequest('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'quiz', text, count: parseInt(count) })
+                })
+                .then(data => {
+                    renderQuizItems(data.quizzes || []);
+                    document.getElementById('documentIndex').style.display = 'flex';
+                    showDocumentContent('quiz', document.querySelector('.index-button[data-index-type="quiz"]'));
+                })
+                .catch(err => alert(`⚠️ 문제 생성 실패: ${err.message}`));
+
             } else {
-                // 요약 및 키워드 분석
-                if (window.javaApp) { 
-                    window.javaApp.analyzeText(type, text); 
-                } else { 
-                    alert(`📊 [${type === 'keyword' ? '키워드 추출' : '핵심 요약'} 분석 요청]\n\n(Java->Python NLP 로직 구현 필요)`); 
-                }
+                apiRequest('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, text })
+                })
+                .then(data => {
+                    if (type === 'keyword') {
+                        document.getElementById('keywordResult').innerHTML = `<strong>키워드:</strong> ${(data.keywords || []).join(', ')}`;
+                    } else {
+                        document.getElementById('summaryResult').innerHTML = `<strong>요약:</strong> ${data.summary || ''}`;
+                    }
+                    document.getElementById('documentIndex').style.display = 'flex';
+                    showDocumentContent('summary_source', document.querySelector('.index-button[data-index-type="summary_source"]'));
+                })
+                .catch(err => alert(`⚠️ 분석 실패: ${err.message}`));
             }
         }
 
