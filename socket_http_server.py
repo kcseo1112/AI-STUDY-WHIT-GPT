@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import socket
 import threading
 import time
@@ -190,8 +191,25 @@ def handle_transcribe(body: bytes) -> bytes:
     if not target_file.exists():
         return http_response(404, {"Content-Type": "application/json"}, b'{"error":"file not found"}')
 
-    model = load_whisper_model()
-    result = model.transcribe(str(target_file))
+    if shutil.which("ffmpeg") is None:
+        error_message = {
+            "error": "ffmpeg가 설치되어 있지 않아 STT 변환을 실행할 수 없습니다. ffmpeg 설치 후 다시 시도하세요.",
+            "hint": "https://ffmpeg.org/download.html",
+        }
+        return http_response(500, {"Content-Type": "application/json; charset=utf-8"}, json.dumps(error_message, ensure_ascii=False).encode("utf-8"))
+
+    try:
+        model = load_whisper_model()
+        result = model.transcribe(str(target_file))
+    except FileNotFoundError as exc:
+        message = str(exc)
+        if "ffmpeg" in message.lower():
+            message = "ffmpeg 실행 파일을 찾을 수 없습니다. 시스템 PATH에 ffmpeg를 추가한 뒤 다시 시도하세요."
+        error_payload = json.dumps({"error": message}, ensure_ascii=False).encode("utf-8")
+        return http_response(500, {"Content-Type": "application/json; charset=utf-8"}, error_payload)
+    except Exception as exc:  # noqa: BLE001
+        error_payload = json.dumps({"error": str(exc)}, ensure_ascii=False).encode("utf-8")
+        return http_response(500, {"Content-Type": "application/json; charset=utf-8"}, error_payload)
     transcript_text = result.get("text", "")
 
     transcript_name = target_file.stem + "_transcript.txt"
@@ -348,13 +366,31 @@ def handle_client(client_conn: socket.socket, address: Tuple[str, int]) -> None:
     client_conn.close()
 
 
-def run_server() -> None:
+def get_local_ip() -> str | None:
+    """Best-effort local IPv4 finder to share LAN access URL."""
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except OSError:
+        return None
+
+
+def run_server(host: str = HOST, port: int = PORT) -> None:
     ensure_directories()
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_socket.bind((HOST, PORT))
+        server_socket.bind((host, port))
         server_socket.listen(5)
-        print(f"[SERVER] Listening on {HOST}:{PORT}")
+        print(f"[SERVER] Listening on {host}:{port}")
+
+        # Provide a helpful LAN URL when binding to localhost or 0.0.0.0
+        if host in ("0.0.0.0", "127.0.0.1"):
+            local_ip = get_local_ip()
+            if local_ip:
+                print(f"[SERVER] 다른 기기 접속 URL: http://{local_ip}:{port}")
+
         while True:
             conn, addr = server_socket.accept()
             thread = threading.Thread(target=handle_client, args=(conn, addr), daemon=True)
@@ -362,4 +398,11 @@ def run_server() -> None:
 
 
 if __name__ == "__main__":
-    run_server()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Simple HTTP STT server")
+    parser.add_argument("--host", default=HOST, help="Bind host (default: env HOST or 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=PORT, help="Bind port (default: env PORT or 8080)")
+    args = parser.parse_args()
+
+    run_server(args.host, args.port)

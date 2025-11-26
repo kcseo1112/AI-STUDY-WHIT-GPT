@@ -1123,8 +1123,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ file_path: filePath })
                 });
-                if (!sttRes.ok) throw new Error('STT 변환 실패');
-                const sttData = await sttRes.json();
+                const sttData = await sttRes.json().catch(() => ({}));
+                if (!sttRes.ok) {
+                    const reason = sttData?.error || 'STT 변환 실패';
+                    throw new Error(reason);
+                }
                 const transcriptText = sttData.text || '';
                 const transcriptPath = sttData.transcript_path;
 
