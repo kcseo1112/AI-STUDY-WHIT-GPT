@@ -42,3 +42,26 @@
 ## 개발 메모
 - 모든 HTTP 요청 파싱, 라우팅, 응답 포맷을 직접 구현했습니다. 프레임워크를 사용하지 않습니다.
 - Whisper 모델은 처음 로드 시 시간이 걸릴 수 있습니다. 환경 변수 `WHISPER_MODEL`(기본값 `base`)로 모델 크기를 조정할 수 있습니다.
+
+## UI 없는 TCP 파일 전송 예제
+GUI 없이 순수 소켓 통신으로 파일을 주고받고 싶다면 다음 두 스크립트를 사용할 수 있습니다.
+
+- `tcp_file_server_plain.py` : 단일 연결을 받아 파일을 저장하는 간단한 서버
+- `tcp_file_client_plain.py` : 지정한 파일을 서버에 전송하는 클라이언트
+
+### 사용 방법
+1. 서버 실행
+   ```bash
+   python tcp_file_server_plain.py --host 0.0.0.0 --port 2501 --output-dir received_files
+   ```
+
+2. 다른 터미널에서 클라이언트 실행 (전송할 파일 경로 지정)
+   ```bash
+   python tcp_file_client_plain.py 127.0.0.1 2501 ./path/to/file.txt
+   ```
+
+프로토콜은 다음 순서로 구성됩니다.
+1. 2바이트: 파일명 길이(빅엔디언 부호 없는 short)
+2. N바이트: UTF-8로 인코딩된 파일명
+3. 8바이트: 파일 크기(빅엔디언 부호 없는 long long)
+4. 파일 내용
