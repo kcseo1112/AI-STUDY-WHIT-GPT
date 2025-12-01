@@ -1,0 +1,20 @@
+# Python 패키지 의존성 (전체 프로젝트)
+# 
+# 설치 방법:
+# pip install -r requirements.txt
+
+# Supabase (서버에서 사용)
+supabase>=2.0.0
+
+# OpenAI (AI 서비스 및 Whisper STT API)
+# 클라이언트와 서버 모두에서 사용
+openai>=1.0.0
+
+# 기타
+python-dotenv>=1.0.0
+
+# 주의사항:
+# - STT 변환은 클라이언트에서 OpenAI Whisper API를 직접 사용합니다.
+# - OpenAI API 키가 .env 파일에 설정되어 있어야 합니다.
+# - 로컬 Whisper 모듈(torch, openai-whisper)은 필요하지 않습니다.
+
