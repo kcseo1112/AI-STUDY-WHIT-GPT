@@ -1,0 +1,195 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2432 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_gui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: Client/client_gui.py) Tj
+T*
+(# client_gui.py) Tj
+T*
+(# 클라이언트 GUI 메인 파일 \(기존 ai_learning_gui.py 리팩토링\)) Tj
+T*
+() Tj
+T*
+(from tkinter import Tk) Tj
+T*
+(from Client.client_ui import ClientUI) Tj
+T*
+(from Client.client_core import TCPClient) Tj
+T*
+(from Client.client_handlers import ClientHandlers) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(class AILearningGUI:) Tj
+T*
+(    """AI 학습 지원 GUI 클라이언트""") Tj
+T*
+(    ) Tj
+T*
+(    def __init__\(self, root\):) Tj
+T*
+(        self.root = root) Tj
+T*
+(        ) Tj
+T*
+(        # TCP 클라이언트) Tj
+T*
+(        self.tcp_client = TCPClient\(\)) Tj
+T*
+(        ) Tj
+T*
+(        # UI 구성) Tj
+T*
+(        self.ui = ClientUI\(root\)) Tj
+T*
+(        ) Tj
+T*
+(        # 이벤트 핸들러) Tj
+T*
+(        self.handlers = ClientHandlers\(self.ui, self.tcp_client\)) Tj
+T*
+(        ) Tj
+T*
+(        # UI에 root 참조 추가 \(핸들러에서 사용\)) Tj
+T*
+(        self.ui.root = root) Tj
+T*
+(        ) Tj
+T*
+(        # 기본 사용자 설정 \(로그인 없이\)) Tj
+T*
+(        self.handlers.current_user_email = "user@example.com") Tj
+T*
+(        self.ui.current_user_email = "user@example.com") Tj
+T*
+(        self.ui.current_username = "user") Tj
+T*
+(        self.ui.is_logged_in = True) Tj
+T*
+(        ) Tj
+T*
+(        # 서버 자동 연결 및 파일 목록 로드) Tj
+T*
+(        self._auto_connect_server\(\)) Tj
+T*
+(    ) Tj
+T*
+(    def _auto_connect_server\(self\):) Tj
+T*
+(        """서버 자동 연결 및 파일 목록 로드""") Tj
+T*
+(        from env_utils import DEFAULT_HOST, DEFAULT_PORT) Tj
+T*
+(        ) Tj
+T*
+(        # UI 업데이트를 위해 after 사용) Tj
+T*
+(        def connect\(\):) Tj
+T*
+(            if self.tcp_client.connect\(DEFAULT_HOST, DEFAULT_PORT\):) Tj
+T*
+(                self.ui.server_status_label.config\() Tj
+T*
+(                    text=f"연결 상태: 연결됨 \({DEFAULT_HOST}:{DEFAULT_PORT}\)", ) Tj
+T*
+(                    fg='green') Tj
+T*
+(                \)) Tj
+T*
+(                # 파일 목록 로드) Tj
+T*
+(                self.handlers.load_file_list\(\)) Tj
+T*
+(            else:) Tj
+T*
+(                self.ui.server_status_label.config\() Tj
+T*
+(                    text=f"연결 상태: 연결 실패 \({DEFAULT_HOST}:{DEFAULT_PORT}\)", ) Tj
+T*
+(                    fg='red') Tj
+T*
+(                \)) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 415 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_gui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        ) Tj
+T*
+(        # UI가 완전히 로드된 후 연결 시도) Tj
+T*
+(        self.root.after\(100, connect\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def main\(\):) Tj
+T*
+(    root = Tk\(\)) Tj
+T*
+(    app = AILearningGUI\(root\)) Tj
+T*
+(    root.mainloop\(\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(if __name__ == "__main__":) Tj
+T*
+(    main\(\)) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>
+endobj
+7 0 obj
+<< /Type /Catalog /Pages 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002561 00000 n 
+0000002687 00000 n 
+0000003153 00000 n 
+0000003279 00000 n 
+0000003342 00000 n 
+trailer
+<< /Size 8 /Root 7 0 R >>
+startxref
+3391
+%%EOF

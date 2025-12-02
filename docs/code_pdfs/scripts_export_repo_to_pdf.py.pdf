@@ -1,0 +1,377 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 1913 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(scripts/export_repo_to_pdf.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: scripts/export_repo_to_pdf.py) Tj
+T*
+(import os) Tj
+T*
+(from pathlib import Path) Tj
+T*
+(from typing import Iterable, List) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(REPO_ROOT = Path\(__file__\).resolve\(\).parents[1]) Tj
+T*
+(OUTPUT_DIR = REPO_ROOT / "docs" / "code_pdfs") Tj
+T*
+() Tj
+T*
+(# File extensions considered text for export) Tj
+T*
+(TEXT_EXTENSIONS = {) Tj
+T*
+(    ".py",) Tj
+T*
+(    ".md",) Tj
+T*
+(    ".txt",) Tj
+T*
+(    ".json",) Tj
+T*
+(    ".sql",) Tj
+T*
+(    ".env",) Tj
+T*
+(}) Tj
+T*
+() Tj
+T*
+(EXCLUDE_DIRS = {) Tj
+T*
+(    ".git",) Tj
+T*
+(    "__pycache__",) Tj
+T*
+(    "docs/code_pdfs",) Tj
+T*
+(}) Tj
+T*
+() Tj
+T*
+(MAX_LINES_PER_PAGE = 55) Tj
+T*
+(TOP_MARGIN = 760) Tj
+T*
+(LINE_HEIGHT = 12) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def iter_text_files\(root: Path\) -> Iterable[Path]:) Tj
+T*
+(    for dirpath, dirnames, filenames in os.walk\(root\):) Tj
+T*
+(        rel_dir = Path\(dirpath\).relative_to\(root\)) Tj
+T*
+(        if any\(part in EXCLUDE_DIRS for part in rel_dir.parts\):) Tj
+T*
+(            dirnames[:] = []) Tj
+T*
+(            continue) Tj
+T*
+(        dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIRS]) Tj
+T*
+(        for filename in filenames:) Tj
+T*
+(            path = Path\(dirpath\) / filename) Tj
+T*
+(            if path.suffix.lower\(\) in TEXT_EXTENSIONS:) Tj
+T*
+(                yield path) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def escape_text\(text: str\) -> str:) Tj
+T*
+(    return text.replace\("\\\\", "\\\\\\\\"\).replace\("\(", "\\\\\("\).replace\("\)", "\\\\\)"\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def chunk_lines\(lines: List[str], size: int\) -> List[List[str]]:) Tj
+T*
+(    return [lines[i : i + size] for i in range\(0, len\(lines\), size\)] or [[]]) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def build_content_stream\(lines: List[str], title: str\) -> str:) Tj
+T*
+(    parts = [) Tj
+T*
+(        "BT",) Tj
+T*
+(        "/F1 12 Tf",) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2460 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(scripts/export_repo_to_pdf.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        f"72 {TOP_MARGIN} Td",) Tj
+T*
+(        f"\({escape_text\(title\)}\) Tj",) Tj
+T*
+(        "T*",) Tj
+T*
+(        "/F1 9 Tf",) Tj
+T*
+(        f"{LINE_HEIGHT} TL",) Tj
+T*
+(    ]) Tj
+T*
+(    for line in lines:) Tj
+T*
+(        parts.append\(f"\({escape_text\(line\)}\) Tj"\)) Tj
+T*
+(        parts.append\("T*"\)) Tj
+T*
+(    parts.append\("ET"\)) Tj
+T*
+(    return "\\n".join\(parts\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def build_pdf\(pages: List[List[str]], title: str\) -> bytes:) Tj
+T*
+(    objects = []) Tj
+T*
+() Tj
+T*
+(    # Font object) Tj
+T*
+(    font_obj_num = len\(objects\) + 1) Tj
+T*
+(    objects.append\("<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>"\)) Tj
+T*
+() Tj
+T*
+(    page_objs = []) Tj
+T*
+(    content_objs = []) Tj
+T*
+(    for page_lines in pages:) Tj
+T*
+(        content = build_content_stream\(page_lines, title\)) Tj
+T*
+(        content_bytes = content.encode\("utf-8"\)) Tj
+T*
+(        content_obj_num = len\(objects\) + 1) Tj
+T*
+(        content_objs.append\(content_obj_num\)) Tj
+T*
+(        objects.append\(f"<< /Length {len\(content_bytes\)} >>\\nstream\\n{content}\\nendstream"\)) Tj
+T*
+() Tj
+T*
+(        page_obj_num = len\(objects\) + 1) Tj
+T*
+(        page_objs.append\(page_obj_num\)) Tj
+T*
+(        page_obj = \() Tj
+T*
+(            "<< /Type /Page /Parent 0 0 R /MediaBox [0 0 612 792] ") Tj
+T*
+(            f"/Contents {content_obj_num} 0 R /Resources << /Font << /F1 {font_obj_num} 0 R >> >> >>") Tj
+T*
+(        \)) Tj
+T*
+(        objects.append\(page_obj\)) Tj
+T*
+() Tj
+T*
+(    # Pages object) Tj
+T*
+(    pages_obj_num = len\(objects\) + 1) Tj
+T*
+(    kids = " ".join\(f"{num} 0 R" for num in page_objs\)) Tj
+T*
+(    objects.append\(f"<< /Type /Pages /Kids [{kids}] /Count {len\(page_objs\)} >>"\)) Tj
+T*
+() Tj
+T*
+(    # Replace parent references now that pages object number is known) Tj
+T*
+(    for idx, page_obj_num in enumerate\(page_objs\):) Tj
+T*
+(        page_obj = objects[page_obj_num - 1]) Tj
+T*
+(        objects[page_obj_num - 1] = page_obj.replace\("0 0 R", f"{pages_obj_num} 0 R", 1\)) Tj
+T*
+() Tj
+T*
+(    # Catalog object) Tj
+T*
+(    catalog_obj_num = len\(objects\) + 1) Tj
+T*
+(    objects.append\(f"<< /Type /Catalog /Pages {pages_obj_num} 0 R >>"\)) Tj
+T*
+() Tj
+T*
+(    # Build PDF body) Tj
+T*
+(    offsets = []) Tj
+T*
+(    pdf_parts = ["%PDF-1.4\\n"]) Tj
+T*
+(    for obj_num, content in enumerate\(objects, start=1\):) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 2024 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(scripts/export_repo_to_pdf.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        offsets.append\(sum\(len\(p.encode\("utf-8"\)\) for p in pdf_parts\)\)) Tj
+T*
+(        pdf_parts.append\(f"{obj_num} 0 obj\\n{content}\\nendobj\\n"\)) Tj
+T*
+() Tj
+T*
+(    xref_offset = sum\(len\(p.encode\("utf-8"\)\) for p in pdf_parts\)) Tj
+T*
+(    pdf_parts.append\("xref\\n"\)) Tj
+T*
+(    pdf_parts.append\(f"0 {len\(objects\) + 1}\\n"\)) Tj
+T*
+(    pdf_parts.append\("0000000000 65535 f \\n"\)) Tj
+T*
+(    for offset in offsets:) Tj
+T*
+(        pdf_parts.append\(f"{offset:010d} 00000 n \\n"\)) Tj
+T*
+() Tj
+T*
+(    pdf_parts.append\() Tj
+T*
+(        "trailer\\n") Tj
+T*
+(        f"<< /Size {len\(objects\) + 1} /Root {catalog_obj_num} 0 R >>\\n") Tj
+T*
+(        f"startxref\\n{xref_offset}\\n%%EOF") Tj
+T*
+(    \)) Tj
+T*
+(    return b"".join\(part.encode\("utf-8"\) for part in pdf_parts\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def add_file_to_pdf\(file_path: Path\) -> Path:) Tj
+T*
+(    try:) Tj
+T*
+(        content = file_path.read_text\(encoding="utf-8"\)) Tj
+T*
+(    except UnicodeDecodeError:) Tj
+T*
+(        content = file_path.read_text\(encoding="utf-8", errors="replace"\)) Tj
+T*
+(    lines = [f"Path: {file_path.relative_to\(REPO_ROOT\)}"] + content.splitlines\(\)) Tj
+T*
+(    page_chunks = chunk_lines\(lines, MAX_LINES_PER_PAGE\)) Tj
+T*
+(    pdf_bytes = build_pdf\(page_chunks, title=str\(file_path.relative_to\(REPO_ROOT\)\)\)) Tj
+T*
+(    output_path = OUTPUT_DIR / f"{file_path.relative_to\(REPO_ROOT\).as_posix\(\).replace\('/', '_'\)}.pdf") Tj
+T*
+(    output_path.parent.mkdir\(parents=True, exist_ok=True\)) Tj
+T*
+(    output_path.write_bytes\(pdf_bytes\)) Tj
+T*
+(    return output_path) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def main\(\):) Tj
+T*
+(    OUTPUT_DIR.mkdir\(parents=True, exist_ok=True\)) Tj
+T*
+(    for file_path in iter_text_files\(REPO_ROOT\):) Tj
+T*
+(        output = add_file_to_pdf\(file_path\)) Tj
+T*
+(        print\(f"Generated {output}"\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(if __name__ == "__main__":) Tj
+T*
+(    main\(\)) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002042 00000 n 
+0000002168 00000 n 
+0000004680 00000 n 
+0000004806 00000 n 
+0000006882 00000 n 
+0000007008 00000 n 
+0000007077 00000 n 
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+7126
+%%EOF

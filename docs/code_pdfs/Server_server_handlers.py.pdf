@@ -1,0 +1,1127 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2508 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: Server/server_handlers.py) Tj
+T*
+(# server_handlers.py) Tj
+T*
+(# 서버 명령 처리 핸들러) Tj
+T*
+() Tj
+T*
+(import os) Tj
+T*
+(import sys) Tj
+T*
+(sys.path.append\(os.path.dirname\(os.path.dirname\(os.path.abspath\(__file__\)\)\)\)) Tj
+T*
+(from env_utils import RECEIVE_DIR) Tj
+T*
+(from ai_services import OPENAI_AVAILABLE, openai_client, analyze_text, generate_quiz) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(class ServerCommandHandlers:) Tj
+T*
+(    """서버 명령 처리 핸들러 클래스""") Tj
+T*
+(    ) Tj
+T*
+(    def __init__\(self, data_manager, log_callback=None\):) Tj
+T*
+(        self.data_manager = data_manager) Tj
+T*
+(        self._log = log_callback or \(lambda msg: print\(msg\)\)) Tj
+T*
+(    ) Tj
+T*
+(    def handle_login\(self, data\):) Tj
+T*
+(        """로그인 처리 \(Folder 테이블 기반\)""") Tj
+T*
+(        username = data.get\("username", ""\)) Tj
+T*
+(        email = data.get\("email"\)) Tj
+T*
+(        password = data.get\("password", ""\)) Tj
+T*
+(        ) Tj
+T*
+(        if not email:) Tj
+T*
+(            return {"status": "error", "message": "이메일을 입력해주세요."}) Tj
+T*
+(        ) Tj
+T*
+(        # 사용자명이 없으면 이메일에서 추출) Tj
+T*
+(        if not username:) Tj
+T*
+(            username = email.split\('@'\)[0]) Tj
+T*
+(        ) Tj
+T*
+(        # 비밀번호가 없으면 빈 문자열로 처리 \(선택사항\)) Tj
+T*
+(        if not password:) Tj
+T*
+(            password = "") Tj
+T*
+(        ) Tj
+T*
+(        # Folder 테이블에서 이메일과 비밀번호로 사용자 확인) Tj
+T*
+(        user = self.data_manager.get_user_by_email_password\(email, password\)) Tj
+T*
+(        ) Tj
+T*
+(        if user:) Tj
+T*
+(            # 로그인 성공) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "message": "로그인 성공",) Tj
+T*
+(                "user": {) Tj
+T*
+(                    "folder_id": user.get\("folder_id"\),) Tj
+T*
+(                    "user_name": user.get\("user_name"\),) Tj
+T*
+(                    "email": user.get\("email"\)) Tj
+T*
+(                }) Tj
+T*
+(            }) Tj
+T*
+(        else:) Tj
+T*
+(            # 새 사용자 등록 - 기본 폴더와 함께 생성) Tj
+T*
+(            new_folder = self.data_manager.create_user_with_default_folder\() Tj
+T*
+(                username=username,) Tj
+T*
+(                email=email,) Tj
+T*
+(                password=password,) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 3176 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                default_folder_title="메인파일") Tj
+T*
+(            \)) Tj
+T*
+(            if new_folder:) Tj
+T*
+(                return {) Tj
+T*
+(                    "status": "success",) Tj
+T*
+(                    "message": "새 사용자로 등록되었습니다. 기본 폴더가 생성되었습니다.",) Tj
+T*
+(                    "user": {) Tj
+T*
+(                        "folder_id": new_folder.get\("folder_id"\),) Tj
+T*
+(                        "user_name": new_folder.get\("user_name"\),) Tj
+T*
+(                        "email": new_folder.get\("email"\)) Tj
+T*
+(                    }) Tj
+T*
+(                }) Tj
+T*
+(            else:) Tj
+T*
+(                return {"status": "error", "message": "사용자 등록에 실패했습니다."}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_save_text\(self, data\):) Tj
+T*
+(        """클라이언트에서 변환된 텍스트를 서버에 저장 \(File 테이블만 사용\)""") Tj
+T*
+(        filename = data.get\("filename"\)) Tj
+T*
+(        text = data.get\("text", ""\)) Tj
+T*
+(        keywords = data.get\("keywords", ""\)) Tj
+T*
+(        summary = data.get\("summary", ""\)) Tj
+T*
+(        ) Tj
+T*
+(        if not filename:) Tj
+T*
+(            return {"status": "error", "message": "파일명이 제공되지 않았습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        if not text:) Tj
+T*
+(            return {"status": "error", "message": "텍스트가 비어있습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            base_name, _ = os.path.splitext\(filename\)) Tj
+T*
+(            ) Tj
+T*
+(            # 1\) 원본 텍스트 파일 저장) Tj
+T*
+(            text_file = os.path.join\(RECEIVE_DIR, f"{base_name}.txt"\)) Tj
+T*
+(            with open\(text_file, 'w', encoding='utf-8'\) as f:) Tj
+T*
+(                f.write\(text\)) Tj
+T*
+(            ) Tj
+T*
+(            self._log\(f"텍스트 저장 완료: {text_file}"\)) Tj
+T*
+(            ) Tj
+T*
+(            # 2\) 요약 파일 경로 생성 \(클라이언트에서 전송한 키워드/요약 사용\)) Tj
+T*
+(            summary_file_path = None) Tj
+T*
+(            if keywords or summary:) Tj
+T*
+(                summary_filename = f"{base_name}_sub.txt") Tj
+T*
+(                summary_file_path = os.path.join\(RECEIVE_DIR, summary_filename\)) Tj
+T*
+(                with open\(summary_file_path, 'w', encoding='utf-8'\) as f:) Tj
+T*
+(                    if keywords:) Tj
+T*
+(                        f.write\("[키워드]\\n"\)) Tj
+T*
+(                        f.write\(keywords + "\\n\\n"\)) Tj
+T*
+(                    if summary:) Tj
+T*
+(                        f.write\("[요약]\\n"\)) Tj
+T*
+(                        f.write\(summary\)) Tj
+T*
+(            ) Tj
+T*
+(            # File 테이블에 파일 등록 \(folder_id는 NULL로 설정 - 단일 사용자 프로젝트\)) Tj
+T*
+(            # keywords와 summary는 summary_file_path 파일에만 저장 \(테이블 컬럼 사용 안 함\)) Tj
+T*
+(            file_data = self.data_manager.create_file\() Tj
+T*
+(                folder_id=None,  # 단일 사용자 프로젝트이므로 folder_id 불필요) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 2770 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                title=base_name,) Tj
+T*
+(                file_path=text_file,) Tj
+T*
+(                convert_file_path=text_file,) Tj
+T*
+(                summary_file_path=summary_file_path) Tj
+T*
+(            \)) Tj
+T*
+(            ) Tj
+T*
+(            if not file_data:) Tj
+T*
+(                return {"status": "error", "message": "파일 저장 실패"}) Tj
+T*
+(            ) Tj
+T*
+(            file_id = file_data.get\('file_id'\)) Tj
+T*
+(            ) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "message": "텍스트 및 서브 파일 저장 완료",) Tj
+T*
+(                "file_id": file_id,) Tj
+T*
+(                "text_file": text_file) Tj
+T*
+(            }) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            import traceback) Tj
+T*
+(            traceback.print_exc\(\)) Tj
+T*
+(            return {"status": "error", "message": f"텍스트 저장 오류: {e}"}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_manage_folder\(self, data\):) Tj
+T*
+(        """폴더 관리 \(ERD 구조: Folder 테이블\)""") Tj
+T*
+(        action = data.get\("action"\)) Tj
+T*
+(        folder_name = data.get\("folder_name"\)) Tj
+T*
+(        user_email = data.get\("user_email"\)) Tj
+T*
+(        new_folder_name = data.get\("new_folder_name"\)) Tj
+T*
+(        ) Tj
+T*
+(        # 사용자 정보 가져오기) Tj
+T*
+(        user_folders = self.data_manager.get_user_folders\(user_email\)) Tj
+T*
+(        if not user_folders:) Tj
+T*
+(            return {"status": "error", "message": "사용자를 찾을 수 없습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        first_folder = user_folders[0]) Tj
+T*
+(        user_name = first_folder.get\('user_name', ''\)) Tj
+T*
+(        password = first_folder.get\('password', ''\)) Tj
+T*
+(        ) Tj
+T*
+(        if action == "create":) Tj
+T*
+(            # 새 폴더 생성 \(부모 폴더는 NULL 또는 기본 폴더\)) Tj
+T*
+(            new_folder = self.data_manager.create_folder\() Tj
+T*
+(                p_folder_id=None,  # 최상위 폴더) Tj
+T*
+(                title=folder_name,) Tj
+T*
+(                user_name=user_name,) Tj
+T*
+(                email=user_email,) Tj
+T*
+(                password=password) Tj
+T*
+(            \)) Tj
+T*
+(            if new_folder:) Tj
+T*
+(                return {"status": "success", "message": f"폴더 '{folder_name}'가 생성되었습니다."}) Tj
+T*
+(            else:) Tj
+T*
+(                return {"status": "error", "message": "폴더 생성에 실패했습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        elif action == "update":) Tj
+T*
+(            # 폴더 이름 변경) Tj
+T*
+(            folders = self.data_manager.get_user_folders\(user_email\)) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 3005 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(            target_folder = None) Tj
+T*
+(            for folder in folders:) Tj
+T*
+(                if folder.get\('title'\) == folder_name:) Tj
+T*
+(                    target_folder = folder) Tj
+T*
+(                    break) Tj
+T*
+(            ) Tj
+T*
+(            if not target_folder:) Tj
+T*
+(                return {"status": "error", "message": "폴더를 찾을 수 없습니다."}) Tj
+T*
+(            ) Tj
+T*
+(            updated = self.data_manager.update_folder\() Tj
+T*
+(                target_folder.get\('folder_id'\),) Tj
+T*
+(                title=new_folder_name) Tj
+T*
+(            \)) Tj
+T*
+(            if updated:) Tj
+T*
+(                return {"status": "success", "message": f"폴더가 '{new_folder_name}'로 변경되었습니다."}) Tj
+T*
+(            else:) Tj
+T*
+(                return {"status": "error", "message": "폴더 수정에 실패했습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        elif action == "delete":) Tj
+T*
+(            # 폴더 삭제) Tj
+T*
+(            folders = self.data_manager.get_user_folders\(user_email\)) Tj
+T*
+(            target_folder = None) Tj
+T*
+(            for folder in folders:) Tj
+T*
+(                if folder.get\('title'\) == folder_name:) Tj
+T*
+(                    target_folder = folder) Tj
+T*
+(                    break) Tj
+T*
+(            ) Tj
+T*
+(            if not target_folder:) Tj
+T*
+(                return {"status": "error", "message": "폴더를 찾을 수 없습니다."}) Tj
+T*
+(            ) Tj
+T*
+(            # 기본 폴더는 삭제 불가) Tj
+T*
+(            if target_folder.get\('title'\) == '메인파일' and len\(folders\) == 1:) Tj
+T*
+(                return {"status": "error", "message": "기본 폴더는 삭제할 수 없습니다."}) Tj
+T*
+(            ) Tj
+T*
+(            success = self.data_manager.delete_folder\(target_folder.get\('folder_id'\)\)) Tj
+T*
+(            if success:) Tj
+T*
+(                return {"status": "success", "message": f"폴더 '{folder_name}'가 삭제되었습니다."}) Tj
+T*
+(            else:) Tj
+T*
+(                return {"status": "error", "message": "폴더 삭제에 실패했습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        else:) Tj
+T*
+(            return {"status": "error", "message": "알 수 없는 작업입니다."}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_load_file\(self, data\):) Tj
+T*
+(        """파일 내용 로드 \(ERD 구조: File 테이블\)""") Tj
+T*
+(        file_id = data.get\("file_id"\)) Tj
+T*
+(        ) Tj
+T*
+(        file_data = self.data_manager.get_file\(file_id\)) Tj
+T*
+(        if file_data:) Tj
+T*
+(            # 파일 경로에서 텍스트 읽기) Tj
+T*
+(            file_path = file_data.get\('file_path'\) or file_data.get\('convert_file_path'\)) Tj
+T*
+(            text = "") Tj
+T*
+(            if file_path and os.path.exists\(file_path\):) Tj
+T*
+(                try:) Tj
+T*
+(                    with open\(file_path, 'r', encoding='utf-8'\) as f:) Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+10 0 obj
+<< /Length 3198 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                        text = f.read\(\)) Tj
+T*
+(                except Exception as e:) Tj
+T*
+(                    self._log\(f"파일 읽기 오류: {e}"\)) Tj
+T*
+(            ) Tj
+T*
+(            # 요약 파일 경로에서 키워드/요약 읽기 \(summary_file_path 파일에서 읽기\)) Tj
+T*
+(            keyword_text = "") Tj
+T*
+(            summary_text = "") Tj
+T*
+(            summary_file_path = file_data.get\('summary_file_path'\)) Tj
+T*
+(            if summary_file_path and os.path.exists\(summary_file_path\):) Tj
+T*
+(                try:) Tj
+T*
+(                    with open\(summary_file_path, 'r', encoding='utf-8'\) as f:) Tj
+T*
+(                        summary_content = f.read\(\)) Tj
+T*
+(                        # 키워드와 요약 추출) Tj
+T*
+(                        if "[키워드]" in summary_content:) Tj
+T*
+(                            parts = summary_content.split\("[요약]"\)) Tj
+T*
+(                            keyword_text = parts[0].replace\("[키워드]", ""\).strip\(\)) Tj
+T*
+(                            if len\(parts\) > 1:) Tj
+T*
+(                                summary_text = parts[1].strip\(\)) Tj
+T*
+(                        elif "[요약]" in summary_content:) Tj
+T*
+(                            summary_text = summary_content.replace\("[요약]", ""\).strip\(\)) Tj
+T*
+(                except Exception as e:) Tj
+T*
+(                    self._log\(f"요약 파일 읽기 오류: {e}"\)) Tj
+T*
+(            ) Tj
+T*
+(            # 퀴즈 데이터 가져오기 \(이전 답안 포함\)) Tj
+T*
+(            quizzes = self.data_manager.get_quizzes_by_file\(file_id\)) Tj
+T*
+(            quiz_data = None) Tj
+T*
+(            if quizzes:) Tj
+T*
+(                quiz_data = {) Tj
+T*
+(                    "questions": []) Tj
+T*
+(                }) Tj
+T*
+(                for quiz in quizzes:) Tj
+T*
+(                    quiz_data["questions"].append\({) Tj
+T*
+(                        "question": quiz.get\('question', ''\),) Tj
+T*
+(                        "answer": quiz.get\('correct_answer', ''\),) Tj
+T*
+(                        "explanation": quiz.get\('explanation', ''\),) Tj
+T*
+(                        "quiz_id": quiz.get\('quiz_id'\),) Tj
+T*
+(                        "user_answer": quiz.get\('user_answer', ''\)  # 이전 답안 포함) Tj
+T*
+(                    }\)) Tj
+T*
+(            ) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "file_data": {) Tj
+T*
+(                    "file_id": file_data.get\('file_id'\),) Tj
+T*
+(                    "title": file_data.get\('title'\),) Tj
+T*
+(                    "text": text,) Tj
+T*
+(                    "keywords": keyword_text,) Tj
+T*
+(                    "summary": summary_text,) Tj
+T*
+(                    "quiz": quiz_data) Tj
+T*
+(                }) Tj
+T*
+(            }) Tj
+T*
+(        else:) Tj
+T*
+(            return {"status": "error", "message": "파일을 찾을 수 없습니다."}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_save_score\(self, data\):) Tj
+T*
+(        """채점 결과 저장 \(ERD 구조: Quiz 테이블의 correct_is 업데이트\)""") Tj
+T*
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 10 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+12 0 obj
+<< /Length 2858 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        file_id = data.get\("file_id"\)) Tj
+T*
+(        quiz_results = data.get\("quiz_results", []\)  # [{"quiz_id": 1, "user_answer": "...", "correct_is": True}, ...]) Tj
+T*
+(        ) Tj
+T*
+(        if not file_id:) Tj
+T*
+(            # 기존 방식 호환성 \(quiz_results가 없으면 단순 점수만 저장\)) Tj
+T*
+(            correct = data.get\("correct", 0\)) Tj
+T*
+(            total = data.get\("total", 0\)) Tj
+T*
+(            self._log\(f"점수 저장: {correct}/{total}"\)) Tj
+T*
+(            return {"status": "success", "message": "점수가 저장되었습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            updated_count = 0) Tj
+T*
+(            for result in quiz_results:) Tj
+T*
+(                quiz_id = result.get\("quiz_id"\)) Tj
+T*
+(                user_answer = result.get\("user_answer", ""\)) Tj
+T*
+(                correct_is = result.get\("correct_is", False\)) Tj
+T*
+(                ) Tj
+T*
+(                if quiz_id:) Tj
+T*
+(                    updated = self.data_manager.update_quiz\() Tj
+T*
+(                        quiz_id=quiz_id,) Tj
+T*
+(                        user_answer=user_answer,) Tj
+T*
+(                        correct_is=correct_is) Tj
+T*
+(                    \)) Tj
+T*
+(                    if updated:) Tj
+T*
+(                        updated_count += 1) Tj
+T*
+(            ) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "message": f"{updated_count}개의 퀴즈 답안이 저장되었습니다.") Tj
+T*
+(            }) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            return {"status": "error", "message": f"점수 저장 오류: {e}"}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_generate_quiz\(self, data\):) Tj
+T*
+(        """퀴즈 생성 \(ERD 구조: Quiz 테이블에 저장\) - 여러 문제""") Tj
+T*
+(        file_id = data.get\("file_id"\)) Tj
+T*
+(        text = data.get\("text"\)) Tj
+T*
+(        count = data.get\("count", 5\)) Tj
+T*
+(        ) Tj
+T*
+(        if not file_id:) Tj
+T*
+(            return {"status": "error", "message": "파일 ID가 제공되지 않았습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        if not text:) Tj
+T*
+(            return {"status": "error", "message": "텍스트가 제공되지 않았습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            # OpenAI로 퀴즈 생성) Tj
+T*
+(            quiz_data = generate_quiz\(text, count\)) Tj
+T*
+(            ) Tj
+T*
+(            # Quiz 테이블에 저장) Tj
+T*
+(            saved_quizzes = []) Tj
+T*
+(            for question_data in quiz_data.get\("questions", []\):) Tj
+T*
+(                quiz = self.data_manager.create_quiz\() Tj
+T*
+(                    file_id=file_id,) Tj
+T*
+(                    question=question_data.get\("question", ""\),) Tj
+T*
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 12 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+14 0 obj
+<< /Length 2651 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                    example=None,  # OpenAI 응답에 example이 없으면 None) Tj
+T*
+(                    correct_answer=question_data.get\("answer", ""\),) Tj
+T*
+(                    explanation=question_data.get\("explanation", ""\),) Tj
+T*
+(                    user_answer=None,) Tj
+T*
+(                    correct_is=False) Tj
+T*
+(                \)) Tj
+T*
+(                if quiz:) Tj
+T*
+(                    saved_quizzes.append\(quiz\)) Tj
+T*
+(            ) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "quiz": quiz_data,) Tj
+T*
+(                "message": f"{len\(saved_quizzes\)}개의 퀴즈가 저장되었습니다.") Tj
+T*
+(            }) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            import traceback) Tj
+T*
+(            traceback.print_exc\(\)) Tj
+T*
+(            return {"status": "error", "message": f"퀴즈 생성 오류: {e}"}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_generate_single_quiz\(self, data\):) Tj
+T*
+(        """퀴즈 한 문제 생성 및 DB 저장""") Tj
+T*
+(        file_id = data.get\("file_id"\)) Tj
+T*
+(        question = data.get\("question"\)) Tj
+T*
+(        answer = data.get\("answer"\)) Tj
+T*
+(        explanation = data.get\("explanation"\)) Tj
+T*
+(        ) Tj
+T*
+(        if not file_id:) Tj
+T*
+(            return {"status": "error", "message": "파일 ID가 제공되지 않았습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        if not question or not answer:) Tj
+T*
+(            return {"status": "error", "message": "문제와 정답이 제공되지 않았습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            # Quiz 테이블에 저장) Tj
+T*
+(            quiz = self.data_manager.create_quiz\() Tj
+T*
+(                file_id=file_id,) Tj
+T*
+(                question=question,) Tj
+T*
+(                example=None,) Tj
+T*
+(                correct_answer=answer,) Tj
+T*
+(                explanation=explanation,) Tj
+T*
+(                user_answer=None,) Tj
+T*
+(                correct_is=False) Tj
+T*
+(            \)) Tj
+T*
+(            ) Tj
+T*
+(            if quiz:) Tj
+T*
+(                return {) Tj
+T*
+(                    "status": "success",) Tj
+T*
+(                    "quiz_id": quiz.get\('quiz_id'\),) Tj
+T*
+(                    "message": "퀴즈가 저장되었습니다.") Tj
+T*
+(                }) Tj
+T*
+(            else:) Tj
+T*
+(                return {"status": "error", "message": "퀴즈 저장 실패"}) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            import traceback) Tj
+T*
+(            traceback.print_exc\(\)) Tj
+T*
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 14 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+16 0 obj
+<< /Length 2579 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(            return {"status": "error", "message": f"퀴즈 저장 오류: {e}"}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_load_quizzes\(self, data\):) Tj
+T*
+(        """파일에 속한 퀴즈 목록 로드""") Tj
+T*
+(        file_id = data.get\("file_id"\)) Tj
+T*
+(        ) Tj
+T*
+(        if not file_id:) Tj
+T*
+(            return {"status": "error", "message": "파일 ID가 제공되지 않았습니다."}) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            quizzes = self.data_manager.get_quizzes_by_file\(file_id\)) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "quizzes": quizzes) Tj
+T*
+(            }) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            return {"status": "error", "message": f"퀴즈 로드 오류: {e}"}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_list_files\(self, data\):) Tj
+T*
+(        """모든 파일 목록 조회""") Tj
+T*
+(        try:) Tj
+T*
+(            files = self.data_manager.get_all_files\(\)) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "files": files) Tj
+T*
+(            }) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            return {"status": "error", "message": f"파일 목록 조회 오류: {e}"}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_analyze_text\(self, data\):) Tj
+T*
+(        """텍스트 분석 \(키워드/요약\)""") Tj
+T*
+(        analysis_type = data.get\("type"\)) Tj
+T*
+(        text = data.get\("text"\)) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            result = analyze_text\(text, analysis_type\)) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "type": analysis_type,) Tj
+T*
+(                "result": result) Tj
+T*
+(            }) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            return {"status": "error", "message": f"분석 오류: {e}"}) Tj
+T*
+(    ) Tj
+T*
+(    def handle_convert_audio\(self, data\):) Tj
+T*
+(        """오디오 파일 변환 \(STT\) - 서버에서 처리 \(OpenAI Whisper API 사용\)""") Tj
+T*
+(        from ai_services import STT_AVAILABLE, STT_ERROR, transcribe_audio) Tj
+T*
+(        ) Tj
+T*
+(        filename = data.get\("filename"\)) Tj
+T*
+(        file_path = os.path.join\(RECEIVE_DIR, filename\)) Tj
+T*
+(        ) Tj
+T*
+(        if not os.path.exists\(file_path\):) Tj
+T*
+(            return {"status": "error", "message": f"파일을 찾을 수 없습니다: {filename}"}) Tj
+T*
+(        ) Tj
+T*
+(        if not STT_AVAILABLE:) Tj
+T*
+ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 16 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+18 0 obj
+<< /Length 1801 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(            error_msg = "OpenAI API를 사용할 수 없습니다.") Tj
+T*
+(            if STT_ERROR:) Tj
+T*
+(                error_msg += f"\\n오류 상세: {STT_ERROR}") Tj
+T*
+(            error_msg += "\\n\\n서버에 다음을 확인해주세요:") Tj
+T*
+(            error_msg += "\\n1. OpenAI API 키가 .env 파일에 설정되어 있는지 확인") Tj
+T*
+(            error_msg += "\\n2. openai 패키지가 설치되어 있는지 확인: pip install openai") Tj
+T*
+(            return {"status": "error", "message": error_msg}) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            # OpenAI Whisper API를 사용한 변환) Tj
+T*
+(            self._log\(f"오디오 변환 시작: {filename} \(OpenAI Whisper API 사용\)"\)) Tj
+T*
+(            text = transcribe_audio\(file_path\)) Tj
+T*
+(            ) Tj
+T*
+(            # 변환된 텍스트를 파일로 저장) Tj
+T*
+(            text_file = os.path.join\(RECEIVE_DIR, f"{os.path.splitext\(filename\)[0]}.txt"\)) Tj
+T*
+(            with open\(text_file, 'w', encoding='utf-8'\) as f:) Tj
+T*
+(                f.write\(text\)) Tj
+T*
+(            ) Tj
+T*
+(            self._log\(f"오디오 변환 완료: {filename} -> {len\(text\)}자"\)) Tj
+T*
+(            ) Tj
+T*
+(            return {) Tj
+T*
+(                "status": "success",) Tj
+T*
+(                "message": "변환 완료",) Tj
+T*
+(                "text": text,) Tj
+T*
+(                "text_file": text_file) Tj
+T*
+(            }) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            error_msg = f"변환 오류: {e}") Tj
+T*
+(            self._log\(f"오디오 변환 오류 \({filename}\): {e}"\)) Tj
+T*
+(            return {"status": "error", "message": error_msg}) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 18 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+20 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R] /Count 9 >>
+endobj
+21 0 obj
+<< /Type /Catalog /Pages 20 0 R >>
+endobj
+xref
+0 22
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002637 00000 n 
+0000002764 00000 n 
+0000005992 00000 n 
+0000006119 00000 n 
+0000008941 00000 n 
+0000009068 00000 n 
+0000012125 00000 n 
+0000012252 00000 n 
+0000015503 00000 n 
+0000015632 00000 n 
+0000018543 00000 n 
+0000018672 00000 n 
+0000021376 00000 n 
+0000021505 00000 n 
+0000024137 00000 n 
+0000024266 00000 n 
+0000026120 00000 n 
+0000026249 00000 n 
+0000026360 00000 n 
+trailer
+<< /Size 22 /Root 21 0 R >>
+startxref
+26411
+%%EOF

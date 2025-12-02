@@ -1,0 +1,267 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2444 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(env_utils.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: env_utils.py) Tj
+T*
+(# env_utils.py) Tj
+T*
+(# 환경 변수 유틸리티 모듈 \(.env 파일에서 읽기\)) Tj
+T*
+() Tj
+T*
+(import os) Tj
+T*
+() Tj
+T*
+(# .env 파일에서 환경 변수 로드) Tj
+T*
+(def load_env_file\(\):) Tj
+T*
+(    """.env 파일에서 환경 변수 로드""") Tj
+T*
+(    env_path = os.path.join\(os.path.dirname\(os.path.abspath\(__file__\)\), '.env'\)) Tj
+T*
+(    if os.path.exists\(env_path\):) Tj
+T*
+(        try:) Tj
+T*
+(            with open\(env_path, 'r', encoding='utf-8'\) as f:) Tj
+T*
+(                for line in f:) Tj
+T*
+(                    line = line.strip\(\)) Tj
+T*
+(                    # 주석이나 빈 줄 무시) Tj
+T*
+(                    if not line or line.startswith\('#'\):) Tj
+T*
+(                        continue) Tj
+T*
+(                    # KEY=VALUE 형식 파싱) Tj
+T*
+(                    if '=' in line:) Tj
+T*
+(                        key, value = line.split\('=', 1\)) Tj
+T*
+(                        key = key.strip\(\)) Tj
+T*
+(                        value = value.strip\(\).strip\('"'\).strip\("'"\)) Tj
+T*
+(                        os.environ[key] = value) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            print\(f"환경 변수 파일 로드 오류: {e}"\)) Tj
+T*
+() Tj
+T*
+(# .env 파일 로드) Tj
+T*
+(load_env_file\(\)) Tj
+T*
+() Tj
+T*
+(# 환경 변수 읽기 함수들 \(.env 파일에서만 읽기\)) Tj
+T*
+(def get_default_host\(\):) Tj
+T*
+(    value = os.getenv\('DEFAULT_HOST'\)) Tj
+T*
+(    if value is None:) Tj
+T*
+(        raise ValueError\("DEFAULT_HOST가 .env 파일에 설정되어 있지 않습니다."\)) Tj
+T*
+(    return value) Tj
+T*
+() Tj
+T*
+(def get_default_port\(\):) Tj
+T*
+(    value = os.getenv\('DEFAULT_PORT'\)) Tj
+T*
+(    if value is None:) Tj
+T*
+(        raise ValueError\("DEFAULT_PORT가 .env 파일에 설정되어 있지 않습니다."\)) Tj
+T*
+(    return int\(value\)) Tj
+T*
+() Tj
+T*
+(def get_bufsize\(\):) Tj
+T*
+(    value = os.getenv\('BUFSIZE'\)) Tj
+T*
+(    if value is None:) Tj
+T*
+(        raise ValueError\("BUFSIZE가 .env 파일에 설정되어 있지 않습니다."\)) Tj
+T*
+(    return int\(value\)) Tj
+T*
+() Tj
+T*
+(def get_receive_dir\(\):) Tj
+T*
+(    value = os.getenv\('RECEIVE_DIR'\)) Tj
+T*
+(    if value is None:) Tj
+T*
+(        raise ValueError\("RECEIVE_DIR이 .env 파일에 설정되어 있지 않습니다."\)) Tj
+T*
+(    return value) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2371 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(env_utils.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(def get_data_dir\(\):) Tj
+T*
+(    value = os.getenv\('DATA_DIR'\)) Tj
+T*
+(    if value is None:) Tj
+T*
+(        raise ValueError\("DATA_DIR이 .env 파일에 설정되어 있지 않습니다."\)) Tj
+T*
+(    return value) Tj
+T*
+() Tj
+T*
+(def get_supabase_url\(\):) Tj
+T*
+(    value = os.getenv\('SUPABASE_URL'\)) Tj
+T*
+(    if value is None:) Tj
+T*
+(        raise ValueError\("SUPABASE_URL이 .env 파일에 설정되어 있지 않습니다."\)) Tj
+T*
+(    return value) Tj
+T*
+() Tj
+T*
+(def get_supabase_anon_key\(\):) Tj
+T*
+(    value = os.getenv\('SUPABASE_ANON_KEY'\)) Tj
+T*
+(    if value is None:) Tj
+T*
+(        raise ValueError\("SUPABASE_ANON_KEY가 .env 파일에 설정되어 있지 않습니다."\)) Tj
+T*
+(    return value) Tj
+T*
+() Tj
+T*
+(def get_openai_api_key\(\):) Tj
+T*
+(    return os.getenv\('OPENAI_API_KEY', ''\)  # OpenAI는 선택사항이므로 빈 문자열 허용) Tj
+T*
+() Tj
+T*
+(def get_openai_model\(\):) Tj
+T*
+(    value = os.getenv\('OPENAI_MODEL'\)) Tj
+T*
+(    if value is None:) Tj
+T*
+(        raise ValueError\("OPENAI_MODEL이 .env 파일에 설정되어 있지 않습니다."\)) Tj
+T*
+(    return value) Tj
+T*
+() Tj
+T*
+(def get_whisper_model\(\):) Tj
+T*
+(    """Whisper 모델 설정 \(OpenAI Whisper API는 'whisper-1'만 사용, 호환성을 위해 유지\)""") Tj
+T*
+(    # OpenAI Whisper API는 'whisper-1' 모델만 사용하므로 기본값 반환) Tj
+T*
+(    return os.getenv\('WHISPER_MODEL', 'whisper-1'\)) Tj
+T*
+() Tj
+T*
+(def get_whisper_language\(\):) Tj
+T*
+(    """Whisper 언어 설정 \(선택사항, 없으면 자동 감지\)""") Tj
+T*
+(    # OpenAI Whisper API는 language가 없으면 자동 감지하므로 선택사항) Tj
+T*
+(    return os.getenv\('WHISPER_LANGUAGE', None\)) Tj
+T*
+() Tj
+T*
+(# 호환성을 위한 상수 \(기존 코드와의 호환\)) Tj
+T*
+(DEFAULT_HOST = get_default_host\(\)) Tj
+T*
+(DEFAULT_PORT = get_default_port\(\)) Tj
+T*
+(BUFSIZE = get_bufsize\(\)) Tj
+T*
+(RECEIVE_DIR = get_receive_dir\(\)) Tj
+T*
+(DATA_DIR = get_data_dir\(\)) Tj
+T*
+(SUPABASE_URL = get_supabase_url\(\)) Tj
+T*
+(SUPABASE_ANON_KEY = get_supabase_anon_key\(\)) Tj
+T*
+(OPENAI_API_KEY = get_openai_api_key\(\)) Tj
+T*
+(OPENAI_MODEL = get_openai_model\(\)) Tj
+T*
+(WHISPER_MODEL = get_whisper_model\(\)) Tj
+T*
+(WHISPER_LANGUAGE = get_whisper_language\(\)) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>
+endobj
+7 0 obj
+<< /Type /Catalog /Pages 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002573 00000 n 
+0000002699 00000 n 
+0000005122 00000 n 
+0000005248 00000 n 
+0000005311 00000 n 
+trailer
+<< /Size 8 /Root 7 0 R >>
+startxref
+5360
+%%EOF

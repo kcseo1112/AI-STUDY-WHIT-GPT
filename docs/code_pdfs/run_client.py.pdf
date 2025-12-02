@@ -1,0 +1,59 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 292 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(run_client.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: run_client.py) Tj
+T*
+(# run_client.py) Tj
+T*
+(# 클라이언트 실행 진입점) Tj
+T*
+() Tj
+T*
+(from Client.client_gui import main) Tj
+T*
+() Tj
+T*
+(if __name__ == "__main__":) Tj
+T*
+(    main\(\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+5 0 obj
+<< /Type /Catalog /Pages 4 0 R >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000000420 00000 n 
+0000000546 00000 n 
+0000000603 00000 n 
+trailer
+<< /Size 6 /Root 5 0 R >>
+startxref
+652
+%%EOF
