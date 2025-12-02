@@ -1,0 +1,277 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2612 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(README.md) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: README.md) Tj
+T*
+(# AI 학습 지원 시스템) Tj
+T*
+() Tj
+T*
+(오디오 파일을 텍스트로 변환하고, AI를 활용하여 키워드 추출, 요약, 퀴즈 생성을 지원하는 시스템입니다.) Tj
+T*
+() Tj
+T*
+(## 프로젝트 구조) Tj
+T*
+() Tj
+T*
+(```) Tj
+T*
+(prototype_v3/) Tj
+T*
+(├── Client/              # 클라이언트 코드) Tj
+T*
+(│   ├── client_core.py   # TCP 통신 모듈) Tj
+T*
+(│   ├── client_gui.py    # GUI 메인) Tj
+T*
+(│   ├── client_handlers.py  # 이벤트 핸들러) Tj
+T*
+(│   └── client_ui.py     # UI 구성) Tj
+T*
+(├── Server/              # 서버 코드) Tj
+T*
+(│   ├── server_core.py   # 서버 핵심 기능) Tj
+T*
+(│   ├── server_data_supabase.py  # Supabase 데이터 관리) Tj
+T*
+(│   ├── server_data.py   # JSON 폴백 데이터 관리) Tj
+T*
+(│   ├── server_gui.py    # 서버 GUI) Tj
+T*
+(│   └── server_handlers.py  # 서버 명령 처리) Tj
+T*
+(├── ai_services.py       # OpenAI API 서비스) Tj
+T*
+(├── env_utils.py         # 환경 변수 관리) Tj
+T*
+(├── supabase_client.py   # Supabase 클라이언트) Tj
+T*
+(├── run_client.py        # 클라이언트 실행) Tj
+T*
+(├── run_server.py        # 서버 실행 \(GUI\)) Tj
+T*
+(├── run_server_console.py # 서버 실행 \(콘솔\)) Tj
+T*
+(├── requirements.txt     # 전체 패키지 의존성) Tj
+T*
+(├── requirements-client.txt  # 클라이언트 패키지 의존성) Tj
+T*
+(├── requirements-server.txt  # 서버 패키지 의존성) Tj
+T*
+(└── supabase_setup_simple.sql  # 데이터베이스 스키마) Tj
+T*
+() Tj
+T*
+(```) Tj
+T*
+() Tj
+T*
+(## 설치 및 실행) Tj
+T*
+() Tj
+T*
+(### 1. 환경 설정) Tj
+T*
+() Tj
+T*
+(`env.txt` 파일을 `.env`로 복사한 후 실제 값으로 채워주세요:) Tj
+T*
+() Tj
+T*
+(```bash) Tj
+T*
+(# Windows) Tj
+T*
+(copy env.txt .env) Tj
+T*
+() Tj
+T*
+(# Linux/Mac) Tj
+T*
+(cp env.txt .env) Tj
+T*
+(```) Tj
+T*
+() Tj
+T*
+(그 다음 `.env` 파일을 열어서 다음 정보를 실제 값으로 변경하세요:) Tj
+T*
+(- `OPENAI_API_KEY`: OpenAI API 키 \(https://platform.openai.com/api-keys\)) Tj
+T*
+(- `SUPABASE_URL`: Supabase 프로젝트 URL) Tj
+T*
+(- `SUPABASE_ANON_KEY`: Supabase 익명 키) Tj
+T*
+(- `DEFAULT_HOST`: 서버 호스트 주소 \(예: 127.0.0.1 또는 실제 IP\)) Tj
+T*
+(- 기타 필요한 설정값들) Tj
+T*
+() Tj
+T*
+(**⚠️ 중요**: `.env` 파일은 절대 GitHub에 올리지 마세요! 민감한 정보가 포함되어 있습니다.) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 1943 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(README.md) Tj
+T*
+/F1 9 Tf
+12 TL
+() Tj
+T*
+(### 2. 패키지 설치) Tj
+T*
+() Tj
+T*
+(```bash) Tj
+T*
+(# 전체 설치) Tj
+T*
+(pip install -r requirements.txt) Tj
+T*
+() Tj
+T*
+(# 또는 클라이언트만 설치) Tj
+T*
+(pip install -r requirements-client.txt) Tj
+T*
+() Tj
+T*
+(# 또는 서버만 설치) Tj
+T*
+(pip install -r requirements-server.txt) Tj
+T*
+(```) Tj
+T*
+() Tj
+T*
+(### 3. 데이터베이스 설정) Tj
+T*
+() Tj
+T*
+(Supabase 대시보드의 SQL Editor에서 `supabase_setup_simple.sql` 파일을 실행하세요.) Tj
+T*
+() Tj
+T*
+(### 4. 실행) Tj
+T*
+() Tj
+T*
+(**서버 실행:**) Tj
+T*
+(```bash) Tj
+T*
+(# GUI 모드) Tj
+T*
+(python run_server.py) Tj
+T*
+() Tj
+T*
+(# 콘솔 모드) Tj
+T*
+(python run_server_console.py) Tj
+T*
+(```) Tj
+T*
+() Tj
+T*
+(**클라이언트 실행:**) Tj
+T*
+(```bash) Tj
+T*
+(python run_client.py) Tj
+T*
+(```) Tj
+T*
+() Tj
+T*
+(## 주요 기능) Tj
+T*
+() Tj
+T*
+(1. **오디오 → 텍스트 변환**: OpenAI Whisper API를 사용하여 오디오 파일을 텍스트로 변환) Tj
+T*
+(2. **키워드 추출**: 변환된 텍스트에서 주요 키워드를 자동 추출) Tj
+T*
+(3. **요약 생성**: 텍스트의 핵심 내용을 요약) Tj
+T*
+(4. **퀴즈 생성**: 텍스트 기반으로 학습용 퀴즈 자동 생성) Tj
+T*
+(5. **데이터 저장**: File과 Quiz 테이블에 데이터 저장 \(PostgreSQL/Supabase\)) Tj
+T*
+() Tj
+T*
+(## 기술 스택) Tj
+T*
+() Tj
+T*
+(- **클라이언트**: Python, Tkinter) Tj
+T*
+(- **서버**: Python, TCP/IP 소켓 통신) Tj
+T*
+(- **데이터베이스**: PostgreSQL \(Supabase\)) Tj
+T*
+(- **AI 서비스**: OpenAI API \(Whisper STT, GPT\)) Tj
+T*
+() Tj
+T*
+(## 주의사항) Tj
+T*
+() Tj
+T*
+(- STT 변환은 클라이언트에서 OpenAI Whisper API를 직접 사용합니다.) Tj
+T*
+(- OpenAI API 키가 필요하며, 사용량에 따라 비용이 발생할 수 있습니다.) Tj
+T*
+(- 파일 크기는 최대 25MB까지 지원됩니다.) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>
+endobj
+7 0 obj
+<< /Type /Catalog /Pages 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002741 00000 n 
+0000002867 00000 n 
+0000004862 00000 n 
+0000004988 00000 n 
+0000005051 00000 n 
+trailer
+<< /Size 8 /Root 7 0 R >>
+startxref
+5100
+%%EOF

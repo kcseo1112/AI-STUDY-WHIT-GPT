@@ -1,0 +1,363 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2214 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_core.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: Client/client_core.py) Tj
+T*
+(# client_core.py) Tj
+T*
+(# 클라이언트 TCP 통신 모듈) Tj
+T*
+() Tj
+T*
+(import json) Tj
+T*
+(import socket) Tj
+T*
+(import threading) Tj
+T*
+(import os) Tj
+T*
+(import sys) Tj
+T*
+(sys.path.append\(os.path.dirname\(os.path.dirname\(os.path.abspath\(__file__\)\)\)\)) Tj
+T*
+(from env_utils import DEFAULT_HOST, DEFAULT_PORT, BUFSIZE) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(class TCPClient:) Tj
+T*
+(    """TCP/IP 소켓 클라이언트 \(요청당 새 연결 방식\)""") Tj
+T*
+() Tj
+T*
+(    def __init__\(self\):) Tj
+T*
+(        self.lock = threading.Lock\(\)) Tj
+T*
+(        self.is_connected = False) Tj
+T*
+(        self.host = None) Tj
+T*
+(        self.port = None) Tj
+T*
+() Tj
+T*
+(    def connect\(self, host, port\):) Tj
+T*
+(        """서버 연결 테스트 후 호스트/포트만 기억""") Tj
+T*
+(        try:) Tj
+T*
+(            # 한 번만 테스트 연결) Tj
+T*
+(            with socket.create_connection\(\(host, port\), timeout=5\):) Tj
+T*
+(                pass) Tj
+T*
+(            with self.lock:) Tj
+T*
+(                self.host = host) Tj
+T*
+(                self.port = port) Tj
+T*
+(                self.is_connected = True) Tj
+T*
+(            return True) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            print\(f"연결 실패: {e}"\)) Tj
+T*
+(            return False) Tj
+T*
+() Tj
+T*
+(    def disconnect\(self\):) Tj
+T*
+(        """서버 연결 해제 \(논리적 연결만 해제\)""") Tj
+T*
+(        with self.lock:) Tj
+T*
+(            self.host = None) Tj
+T*
+(            self.port = None) Tj
+T*
+(            self.is_connected = False) Tj
+T*
+() Tj
+T*
+(    def _ensure_target\(self\):) Tj
+T*
+(        if not self.is_connected or not self.host or not self.port:) Tj
+T*
+(            raise RuntimeError\("서버에 연결되어 있지 않습니다."\)) Tj
+T*
+() Tj
+T*
+(    def send_command\(self, command, data=None\):) Tj
+T*
+(        """서버에 명령 전송 \(요청당 새 소켓 사용\)""") Tj
+T*
+(        try:) Tj
+T*
+(            self._ensure_target\(\)) Tj
+T*
+(        except RuntimeError as e:) Tj
+T*
+(            return {"status": "error", "message": str\(e\)}) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2901 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_core.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        try:) Tj
+T*
+(            payload = {) Tj
+T*
+(                "command": command,) Tj
+T*
+(                "data": data or {}) Tj
+T*
+(            }) Tj
+T*
+(            body = json.dumps\(payload, ensure_ascii=False\).encode\("utf-8"\)) Tj
+T*
+(            header = len\(body\).to_bytes\(4, byteorder="big"\)) Tj
+T*
+() Tj
+T*
+(            with self.lock:) Tj
+T*
+(                # STT 처리는 OpenAI API 호출로 시간이 걸릴 수 있으므로 타임아웃 증가) Tj
+T*
+(                with socket.create_connection\(\(self.host, self.port\), timeout=300\) as sock:) Tj
+T*
+(                    # 전송) Tj
+T*
+(                    sock.sendall\(header\)) Tj
+T*
+(                    sock.sendall\(body\)) Tj
+T*
+() Tj
+T*
+(                    # 응답 수신 \(STT 처리 시간 고려하여 타임아웃 증가\)) Tj
+T*
+(                    sock.settimeout\(300.0\)  # 5분 타임아웃) Tj
+T*
+(                    length_bytes = sock.recv\(4\)) Tj
+T*
+(                    if len\(length_bytes\) != 4:) Tj
+T*
+(                        return {"status": "error", "message": "응답 길이 수신 실패"}) Tj
+T*
+() Tj
+T*
+(                    resp_len = int.from_bytes\(length_bytes, byteorder="big"\)) Tj
+T*
+(                    resp_data = b"") Tj
+T*
+(                    while len\(resp_data\) < resp_len:) Tj
+T*
+(                        chunk = sock.recv\(min\(BUFSIZE, resp_len - len\(resp_data\)\)\)) Tj
+T*
+(                        if not chunk:) Tj
+T*
+(                            break) Tj
+T*
+(                        resp_data += chunk) Tj
+T*
+() Tj
+T*
+(            if len\(resp_data\) < resp_len:) Tj
+T*
+(                return {"status": "error", "message": "응답 데이터 부족"}) Tj
+T*
+() Tj
+T*
+(            return json.loads\(resp_data.decode\("utf-8"\)\)) Tj
+T*
+() Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            return {"status": "error", "message": str\(e\)}) Tj
+T*
+() Tj
+T*
+(    def send_file\(self, file_path\):) Tj
+T*
+(        """파일 전송 \(요청당 새 소켓 사용\)""") Tj
+T*
+(        try:) Tj
+T*
+(            self._ensure_target\(\)) Tj
+T*
+(        except RuntimeError as e:) Tj
+T*
+(            return {"status": "error", "message": str\(e\)}) Tj
+T*
+() Tj
+T*
+(        try:) Tj
+T*
+(            if not os.path.exists\(file_path\):) Tj
+T*
+(                return {"status": "error", "message": "파일을 찾을 수 없습니다."}) Tj
+T*
+() Tj
+T*
+(            file_size = os.path.getsize\(file_path\)) Tj
+T*
+(            filename = os.path.basename\(file_path\)) Tj
+T*
+() Tj
+T*
+(            with self.lock:) Tj
+T*
+(                # 파일 전송은 큰 파일도 고려하여 타임아웃 증가) Tj
+T*
+(                with socket.create_connection\(\(self.host, self.port\), timeout=300\) as sock:) Tj
+T*
+(                    sock.settimeout\(300.0\)  # 5분 타임아웃) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 1806 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_core.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                    # 파일명 전송) Tj
+T*
+(                    filename_bytes = filename.encode\('utf-8'\)) Tj
+T*
+(                    sock.sendall\(filename_bytes + b'\\0'\)) Tj
+T*
+() Tj
+T*
+(                    # 서버 준비 신호 대기) Tj
+T*
+(                    ready_signal = sock.recv\(5\)) Tj
+T*
+(                    if ready_signal != b"READY":) Tj
+T*
+(                        return {"status": "error", "message": "서버 준비 신호를 받지 못했습니다."}) Tj
+T*
+() Tj
+T*
+(                    # 파일 크기 전송) Tj
+T*
+(                    file_size_str = str\(file_size\).encode\('utf-8'\)) Tj
+T*
+(                    sock.sendall\(file_size_str + b'\\0'\)) Tj
+T*
+() Tj
+T*
+(                    # 파일 데이터 전송) Tj
+T*
+(                    sent_size = 0) Tj
+T*
+(                    with open\(file_path, 'rb'\) as f:) Tj
+T*
+(                        while sent_size < file_size:) Tj
+T*
+(                            chunk = f.read\(BUFSIZE\)) Tj
+T*
+(                            if not chunk:) Tj
+T*
+(                                break) Tj
+T*
+(                            sock.sendall\(chunk\)) Tj
+T*
+(                            sent_size += len\(chunk\)) Tj
+T*
+() Tj
+T*
+(                    # 서버 응답 확인) Tj
+T*
+(                    response = sock.recv\(7\)) Tj
+T*
+(                    if response == b"SUCCESS":) Tj
+T*
+(                        return {"status": "success", "message": "파일 전송 완료"}) Tj
+T*
+(                    else:) Tj
+T*
+(                        return {"status": "error", "message": "서버에서 오류 발생"}) Tj
+T*
+() Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            return {"status": "error", "message": str\(e\)}) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002343 00000 n 
+0000002469 00000 n 
+0000005422 00000 n 
+0000005548 00000 n 
+0000007406 00000 n 
+0000007532 00000 n 
+0000007601 00000 n 
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+7650
+%%EOF

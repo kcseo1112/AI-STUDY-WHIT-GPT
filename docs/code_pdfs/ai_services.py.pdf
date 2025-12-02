@@ -1,0 +1,527 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2627 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(ai_services.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: ai_services.py) Tj
+T*
+(# ai_services.py) Tj
+T*
+(# AI 서비스 통합 모듈 \(OpenAI Whisper API\)) Tj
+T*
+() Tj
+T*
+(import os) Tj
+T*
+() Tj
+T*
+(# OpenAI API 클라이언트 \(env_utils.py에서 환경 변수 로드됨\)) Tj
+T*
+(try:) Tj
+T*
+(    from env_utils import OPENAI_API_KEY) Tj
+T*
+(    if OPENAI_API_KEY:) Tj
+T*
+(        from openai import OpenAI) Tj
+T*
+(        # 타임아웃 설정: STT 처리는 큰 파일의 경우 시간이 걸릴 수 있음) Tj
+T*
+(        # connect timeout: 10초, read timeout: 300초 \(5분\)) Tj
+T*
+(        import httpx) Tj
+T*
+(        openai_client = OpenAI\() Tj
+T*
+(            api_key=OPENAI_API_KEY,) Tj
+T*
+(            timeout=httpx.Timeout\(10.0, read=300.0\)  # 연결 10초, 읽기 5분) Tj
+T*
+(        \)) Tj
+T*
+(        OPENAI_AVAILABLE = True) Tj
+T*
+(        OPENAI_ERROR = None) Tj
+T*
+(    else:) Tj
+T*
+(        openai_client = None) Tj
+T*
+(        OPENAI_AVAILABLE = False) Tj
+T*
+(        OPENAI_ERROR = "OPENAI_API_KEY 환경 변수가 설정되어 있지 않습니다.") Tj
+T*
+(except ImportError:) Tj
+T*
+(    openai_client = None) Tj
+T*
+(    OPENAI_AVAILABLE = False) Tj
+T*
+(    OPENAI_ERROR = "openai 모듈을 찾을 수 없습니다.") Tj
+T*
+(except Exception as e:) Tj
+T*
+(    openai_client = None) Tj
+T*
+(    OPENAI_AVAILABLE = False) Tj
+T*
+(    OPENAI_ERROR = str\(e\)) Tj
+T*
+() Tj
+T*
+(# STT 기능은 OpenAI Whisper API를 사용하므로 OPENAI_AVAILABLE과 동일) Tj
+T*
+(STT_AVAILABLE = OPENAI_AVAILABLE) Tj
+T*
+(STT_ERROR = OPENAI_ERROR) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def transcribe_audio\(file_path, language=None, model_name=None\):) Tj
+T*
+(    """오디오 파일을 텍스트로 변환 \(OpenAI Whisper API\)""") Tj
+T*
+(    if not OPENAI_AVAILABLE or not openai_client:) Tj
+T*
+(        raise RuntimeError\(f"OpenAI API를 사용할 수 없습니다: {OPENAI_ERROR}"\)) Tj
+T*
+(    ) Tj
+T*
+(    if not os.path.exists\(file_path\):) Tj
+T*
+(        raise FileNotFoundError\(f"파일을 찾을 수 없습니다: {file_path}"\)) Tj
+T*
+(    ) Tj
+T*
+(    # 파일 크기 확인 \(OpenAI Whisper API는 25MB 제한\)) Tj
+T*
+(    file_size = os.path.getsize\(file_path\)) Tj
+T*
+(    max_size = 25 * 1024 * 1024  # 25MB) Tj
+T*
+(    if file_size > max_size:) Tj
+T*
+(        raise ValueError\(f"파일 크기가 너무 큽니다 \({file_size / 1024 / 1024:.2f}MB\). 최대 25MB까지 지원됩니다."\)) Tj
+T*
+(    ) Tj
+T*
+(    # OpenAI Whisper API 사용) Tj
+T*
+(    # language 파라미터는 ISO 639-1 형식 \(예: 'ko', 'en'\)) Tj
+T*
+(    # model은 'whisper-1'만 사용 가능 \(기본값\)) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2824 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(ai_services.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(    from env_utils import WHISPER_LANGUAGE) Tj
+T*
+(    ) Tj
+T*
+(    try:) Tj
+T*
+(        # 파일 열기) Tj
+T*
+(        with open\(file_path, 'rb'\) as audio_file:) Tj
+T*
+(            # 파일명에서 확장자 추출하여 파일명 지정) Tj
+T*
+(            filename = os.path.basename\(file_path\)) Tj
+T*
+(            ) Tj
+T*
+(            transcript = openai_client.audio.transcriptions.create\() Tj
+T*
+(                model="whisper-1",) Tj
+T*
+(                file=\(filename, audio_file, None\),  # \(filename, file_object, content_type\) 튜플 형식) Tj
+T*
+(                language=language or WHISPER_LANGUAGE or None,  # None이면 자동 감지) Tj
+T*
+(                response_format="text") Tj
+T*
+(            \)) Tj
+T*
+(        ) Tj
+T*
+(        return transcript) Tj
+T*
+(    except Exception as e:) Tj
+T*
+(        error_msg = f"STT 변환 중 오류 발생: {str\(e\)}") Tj
+T*
+(        # OpenAI API 오류 메시지 개선) Tj
+T*
+(        if "timeout" in str\(e\).lower\(\):) Tj
+T*
+(            error_msg += "\\n\\n타임아웃이 발생했습니다. 파일이 너무 크거나 네트워크 연결이 불안정할 수 있습니다.") Tj
+T*
+(        elif "invalid" in str\(e\).lower\(\) or "format" in str\(e\).lower\(\):) Tj
+T*
+(            error_msg += "\\n\\n지원되지 않는 파일 형식일 수 있습니다. 지원 형식: mp3, mp4, mpeg, mpga, m4a, wav, webm") Tj
+T*
+(        elif "rate_limit" in str\(e\).lower\(\):) Tj
+T*
+(            error_msg += "\\n\\nAPI 사용량 제한에 도달했습니다. 잠시 후 다시 시도해주세요.") Tj
+T*
+(        raise RuntimeError\(error_msg\) from e) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def generate_keywords\(text\):) Tj
+T*
+(    """텍스트에서 키워드 추출 \(OpenAI\)""") Tj
+T*
+(    if not OPENAI_AVAILABLE or not openai_client:) Tj
+T*
+(        raise RuntimeError\(f"OpenAI API를 사용할 수 없습니다: {OPENAI_ERROR}"\)) Tj
+T*
+(    ) Tj
+T*
+(    prompt = f"""다음 텍스트에서 주요 키워드를 5-10개 추출해주세요. ) Tj
+T*
+(키워드는 쉼표로 구분하여 한국어로 나열해주세요.) Tj
+T*
+() Tj
+T*
+(텍스트:) Tj
+T*
+({text}) Tj
+T*
+() Tj
+T*
+(키워드:""") Tj
+T*
+(    ) Tj
+T*
+(    from env_utils import OPENAI_MODEL) Tj
+T*
+(    response = openai_client.chat.completions.create\() Tj
+T*
+(        model=OPENAI_MODEL,) Tj
+T*
+(        messages=[{"role": "user", "content": prompt}]) Tj
+T*
+(    \)) Tj
+T*
+(    ) Tj
+T*
+(    return response.choices[0].message.content.strip\(\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def generate_summary\(text\):) Tj
+T*
+(    """텍스트 요약 생성 \(OpenAI\)""") Tj
+T*
+(    if not OPENAI_AVAILABLE or not openai_client:) Tj
+T*
+(        raise RuntimeError\(f"OpenAI API를 사용할 수 없습니다: {OPENAI_ERROR}"\)) Tj
+T*
+(    ) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 2096 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(ai_services.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(    prompt = f"""다음 텍스트를 핵심 내용만 간단히 요약해주세요 \(3-5문장\).) Tj
+T*
+() Tj
+T*
+(텍스트:) Tj
+T*
+({text}) Tj
+T*
+() Tj
+T*
+(요약:""") Tj
+T*
+(    ) Tj
+T*
+(    from env_utils import OPENAI_MODEL) Tj
+T*
+(    response = openai_client.chat.completions.create\() Tj
+T*
+(        model=OPENAI_MODEL,) Tj
+T*
+(        messages=[{"role": "user", "content": prompt}]) Tj
+T*
+(    \)) Tj
+T*
+(    ) Tj
+T*
+(    return response.choices[0].message.content.strip\(\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def generate_quiz\(text, count=5\):) Tj
+T*
+(    """퀴즈 생성 \(OpenAI\) - 여러 문제""") Tj
+T*
+(    if not OPENAI_AVAILABLE or not openai_client:) Tj
+T*
+(        raise RuntimeError\(f"OpenAI API를 사용할 수 없습니다: {OPENAI_ERROR}"\)) Tj
+T*
+(    ) Tj
+T*
+(    import json) Tj
+T*
+(    ) Tj
+T*
+(    prompt = f"""다음 텍스트를 기반으로 {count}개의 퀴즈 문제를 생성해주세요. ) Tj
+T*
+(각 문제는 주관식 형식이어야 하며, 정답과 해설을 포함해주세요.) Tj
+T*
+() Tj
+T*
+(텍스트:) Tj
+T*
+({text}) Tj
+T*
+() Tj
+T*
+(JSON 형식으로 응답해주세요:) Tj
+T*
+({{) Tj
+T*
+(  "questions": [) Tj
+T*
+(    {{) Tj
+T*
+(      "question": "문제 내용",) Tj
+T*
+(      "answer": "정답",) Tj
+T*
+(      "explanation": "해설") Tj
+T*
+(    }}) Tj
+T*
+(  ]) Tj
+T*
+(}}""") Tj
+T*
+(    ) Tj
+T*
+(    from env_utils import OPENAI_MODEL) Tj
+T*
+(    response = openai_client.chat.completions.create\() Tj
+T*
+(        model=OPENAI_MODEL,) Tj
+T*
+(        messages=[{"role": "user", "content": prompt}]) Tj
+T*
+(    \)) Tj
+T*
+(    ) Tj
+T*
+(    result_text = response.choices[0].message.content) Tj
+T*
+(    # JSON 추출 \(마크다운 코드 블록 제거\)) Tj
+T*
+(    if "```json" in result_text:) Tj
+T*
+(        result_text = result_text.split\("```json"\)[1].split\("```"\)[0].strip\(\)) Tj
+T*
+(    elif "```" in result_text:) Tj
+T*
+(        result_text = result_text.split\("```"\)[1].split\("```"\)[0].strip\(\)) Tj
+T*
+(    ) Tj
+T*
+(    return json.loads\(result_text\)) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 2203 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(ai_services.py) Tj
+T*
+/F1 9 Tf
+12 TL
+() Tj
+T*
+(def generate_single_quiz\(text, existing_questions=None\):) Tj
+T*
+(    """퀴즈 한 문제 생성 \(OpenAI\) - 기존 문제와 중복되지 않도록""") Tj
+T*
+(    if not OPENAI_AVAILABLE or not openai_client:) Tj
+T*
+(        raise RuntimeError\(f"OpenAI API를 사용할 수 없습니다: {OPENAI_ERROR}"\)) Tj
+T*
+(    ) Tj
+T*
+(    import json) Tj
+T*
+(    ) Tj
+T*
+(    existing_text = "") Tj
+T*
+(    if existing_questions:) Tj
+T*
+(        existing_text = "\\n\\n이미 생성된 문제들 \(중복되지 않도록\):\\n") Tj
+T*
+(        for idx, q in enumerate\(existing_questions, 1\):) Tj
+T*
+(            existing_text += f"{idx}. {q.get\('question', ''\)}\\n") Tj
+T*
+(    ) Tj
+T*
+(    prompt = f"""다음 텍스트를 기반으로 퀴즈 문제 1개를 생성해주세요. ) Tj
+T*
+(주관식 형식이어야 하며, 정답과 해설을 포함해주세요.) Tj
+T*
+({existing_text}) Tj
+T*
+() Tj
+T*
+(텍스트:) Tj
+T*
+({text}) Tj
+T*
+() Tj
+T*
+(JSON 형식으로 응답해주세요:) Tj
+T*
+({{) Tj
+T*
+(  "question": "문제 내용",) Tj
+T*
+(  "answer": "정답",) Tj
+T*
+(  "explanation": "해설") Tj
+T*
+(}}""") Tj
+T*
+(    ) Tj
+T*
+(    from env_utils import OPENAI_MODEL) Tj
+T*
+(    response = openai_client.chat.completions.create\() Tj
+T*
+(        model=OPENAI_MODEL,) Tj
+T*
+(        messages=[{"role": "user", "content": prompt}]) Tj
+T*
+(    \)) Tj
+T*
+(    ) Tj
+T*
+(    result_text = response.choices[0].message.content) Tj
+T*
+(    # JSON 추출 \(마크다운 코드 블록 제거\)) Tj
+T*
+(    if "```json" in result_text:) Tj
+T*
+(        result_text = result_text.split\("```json"\)[1].split\("```"\)[0].strip\(\)) Tj
+T*
+(    elif "```" in result_text:) Tj
+T*
+(        result_text = result_text.split\("```"\)[1].split\("```"\)[0].strip\(\)) Tj
+T*
+(    ) Tj
+T*
+(    return json.loads\(result_text\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def analyze_text\(text, analysis_type="summary"\):) Tj
+T*
+(    """텍스트 분석 \(키워드 또는 요약\)""") Tj
+T*
+(    if analysis_type == "keyword":) Tj
+T*
+(        return generate_keywords\(text\)) Tj
+T*
+(    else:) Tj
+T*
+(        return generate_summary\(text\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 10 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+10 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R 9 0 R] /Count 4 >>
+endobj
+11 0 obj
+<< /Type /Catalog /Pages 10 0 R >>
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002756 00000 n 
+0000002883 00000 n 
+0000005759 00000 n 
+0000005886 00000 n 
+0000008034 00000 n 
+0000008161 00000 n 
+0000010416 00000 n 
+0000010543 00000 n 
+0000010619 00000 n 
+trailer
+<< /Size 12 /Root 11 0 R >>
+startxref
+10670
+%%EOF

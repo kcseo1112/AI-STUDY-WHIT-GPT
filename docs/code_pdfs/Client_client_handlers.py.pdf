@@ -1,0 +1,1767 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 3062 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: Client/client_handlers.py) Tj
+T*
+(# client_handlers.py) Tj
+T*
+(# 클라이언트 이벤트 핸들러 모듈) Tj
+T*
+() Tj
+T*
+(import os) Tj
+T*
+(import json) Tj
+T*
+(import sys) Tj
+T*
+(sys.path.append\(os.path.dirname\(os.path.dirname\(os.path.abspath\(__file__\)\)\)\)) Tj
+T*
+(from tkinter import messagebox, filedialog, END, DISABLED, NORMAL) Tj
+T*
+(from tkinter import LabelFrame, Label, scrolledtext) Tj
+T*
+(from env_utils import DEFAULT_HOST, DEFAULT_PORT) Tj
+T*
+(from Client.client_core import TCPClient) Tj
+T*
+(from ai_services import OPENAI_AVAILABLE, OPENAI_ERROR, generate_keywords, generate_summary, generate_quiz, generate_single_quiz) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(class ClientHandlers:) Tj
+T*
+(    """클라이언트 이벤트 핸들러 클래스""") Tj
+T*
+(    ) Tj
+T*
+(    def __init__\(self, ui, tcp_client\):) Tj
+T*
+(        self.ui = ui) Tj
+T*
+(        self.tcp_client = tcp_client) Tj
+T*
+(        self.current_user_email = None) Tj
+T*
+(        self.current_file_id = None) Tj
+T*
+(        self.current_file_data = None) Tj
+T*
+(        self.current_quiz_data = None) Tj
+T*
+(        ) Tj
+T*
+(        # 이벤트 바인딩) Tj
+T*
+(        self._bind_events\(\)) Tj
+T*
+(    ) Tj
+T*
+(    def _bind_events\(self\):) Tj
+T*
+(        """UI 이벤트 바인딩""") Tj
+T*
+(        # 로그인 이벤트) Tj
+T*
+(        if hasattr\(self.ui, 'login_btn'\):) Tj
+T*
+(            self.ui.login_btn.config\(command=self.handle_login\)) Tj
+T*
+(        if hasattr\(self.ui, 'logout_btn'\):) Tj
+T*
+(            self.ui.logout_btn.config\(command=self.handle_logout\)) Tj
+T*
+(        ) Tj
+T*
+(        # 서버 연결 버튼 제거 \(자동 연결\)) Tj
+T*
+(        self.ui.convert_btn.config\(command=self.show_convert_form\)) Tj
+T*
+(        self.ui.folder_btn.config\(command=self.show_folder_form\)) Tj
+T*
+(        self.ui.select_file_btn.config\(command=self.select_audio_file\)) Tj
+T*
+(        self.ui.convert_btn_main.config\(command=self.handle_convert\)) Tj
+T*
+(        self.ui.folder_tab_add.config\(command=lambda: self.switch_folder_tab\('add'\)\)) Tj
+T*
+(        self.ui.folder_tab_update.config\(command=lambda: self.switch_folder_tab\('update'\)\)) Tj
+T*
+(        self.ui.folder_tab_delete.config\(command=lambda: self.switch_folder_tab\('delete'\)\)) Tj
+T*
+(        self.ui.folder_add_btn.config\(command=self.handle_folder_add\)) Tj
+T*
+(        self.ui.folder_update_btn.config\(command=self.handle_folder_update\)) Tj
+T*
+(        self.ui.folder_delete_btn.config\(command=self.handle_folder_delete\)) Tj
+T*
+(        self.ui.summary_btn.config\(command=lambda: self.show_content\('summary'\)\)) Tj
+T*
+(        self.ui.quiz_btn.config\(command=lambda: self.show_content\('quiz'\)\)) Tj
+T*
+(        self.ui.score_btn.config\(command=self.score_quiz\)) Tj
+T*
+(        self.ui.add_quiz_btn.config\(command=self.add_quiz_question\)) Tj
+T*
+(        self.ui.project_tree.tag_bind\('file', '<Double-1>', self.on_file_select\)) Tj
+T*
+(    ) Tj
+T*
+(    def handle_login\(self\):) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2711 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        """로그인 처리 \(서버의 Folder 테이블에서 확인\)""") Tj
+T*
+(        username = self.ui.login_username_entry.get\(\).strip\(\)) Tj
+T*
+(        email = self.ui.login_email_entry.get\(\).strip\(\)) Tj
+T*
+(        password = self.ui.login_password_entry.get\(\).strip\(\)) Tj
+T*
+(        ) Tj
+T*
+(        # 이메일은 필수) Tj
+T*
+(        if not email:) Tj
+T*
+(            self.ui.login_result_label.config\(text="이메일을 입력해주세요.", fg='red'\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        # 사용자명이 없으면 이메일에서 추출) Tj
+T*
+(        if not username:) Tj
+T*
+(            username = email.split\('@'\)[0]) Tj
+T*
+(        ) Tj
+T*
+(        # 비밀번호가 없으면 빈 문자열로 처리 \(선택사항\)) Tj
+T*
+(        if not password:) Tj
+T*
+(            password = "") Tj
+T*
+(        ) Tj
+T*
+(        # 서버에 연결되어 있는지 확인) Tj
+T*
+(        if not self.tcp_client.is_connected:) Tj
+T*
+(            self.ui.login_result_label.config\(text="먼저 서버에 연결해주세요.", fg='red'\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        # 서버에 로그인 요청 \(Folder 테이블에서 확인\)) Tj
+T*
+(        result = self.tcp_client.send_command\("login", {) Tj
+T*
+(            "username": username,) Tj
+T*
+(            "email": email,) Tj
+T*
+(            "password": password) Tj
+T*
+(        }\)) Tj
+T*
+(        ) Tj
+T*
+(        if result.get\("status"\) == "success":) Tj
+T*
+(            user = result.get\("user", {}\)) Tj
+T*
+(            self.current_user_email = email) Tj
+T*
+(            self.ui.current_user_email = email) Tj
+T*
+(            self.ui.current_username = user.get\("user_name", username\)) Tj
+T*
+(            self.ui.is_logged_in = True) Tj
+T*
+(            ) Tj
+T*
+(            # 로그인 창 닫기) Tj
+T*
+(            self.ui.login_window.destroy\(\)) Tj
+T*
+(            ) Tj
+T*
+(            # 메인 창 표시) Tj
+T*
+(            self.ui.root.deiconify\(\)) Tj
+T*
+(            ) Tj
+T*
+(            # 로그인 상태 업데이트) Tj
+T*
+(            self.ui.login_status_label.config\(text=f"로그인: {email}", fg='green'\)) Tj
+T*
+(            self.ui.logout_btn.pack\(fill=X, pady=2\)) Tj
+T*
+(            ) Tj
+T*
+(            messagebox.showinfo\("성공", result.get\("message", "로그인 성공"\)\)) Tj
+T*
+(        else:) Tj
+T*
+(            self.ui.login_result_label.config\() Tj
+T*
+(                text=result.get\("message", "로그인 실패"\), fg='red') Tj
+T*
+(            \)) Tj
+T*
+(    ) Tj
+T*
+(    def handle_logout\(self\):) Tj
+T*
+(        """로그아웃 처리""") Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 2884 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        self.current_user_email = None) Tj
+T*
+(        self.ui.current_user_email = None) Tj
+T*
+(        self.ui.is_logged_in = False) Tj
+T*
+(        ) Tj
+T*
+(        # 로그인 상태 업데이트) Tj
+T*
+(        self.ui.login_status_label.config\(text="로그인 필요", fg='#f44336'\)) Tj
+T*
+(        self.ui.logout_btn.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        # 로그인 창 다시 표시) Tj
+T*
+(        self.ui.create_login_window\(\)) Tj
+T*
+(        ) Tj
+T*
+(        messagebox.showinfo\("알림", "로그아웃되었습니다."\)) Tj
+T*
+(    ) Tj
+T*
+(    def connect_server\(self\):) Tj
+T*
+(        """서버 연결""") Tj
+T*
+(        host = self.ui.server_host_entry.get\(\).strip\(\) or DEFAULT_HOST) Tj
+T*
+(        try:) Tj
+T*
+(            port = int\(self.ui.server_port_entry.get\(\).strip\(\) or DEFAULT_PORT\)) Tj
+T*
+(        except ValueError:) Tj
+T*
+(            messagebox.showerror\("오류", "포트 번호는 숫자여야 합니다."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        if self.tcp_client.connect\(host, port\):) Tj
+T*
+(            self.ui.server_status_label.config\(text=f"연결 상태: 연결됨 \({host}:{port}\)", fg='green'\)) Tj
+T*
+(            messagebox.showinfo\("성공", "서버에 연결되었습니다."\)) Tj
+T*
+(        else:) Tj
+T*
+(            self.ui.server_status_label.config\(text="연결 상태: 연결 실패", fg='red'\)) Tj
+T*
+(            messagebox.showerror\("오류", "서버에 연결할 수 없습니다."\)) Tj
+T*
+(    ) Tj
+T*
+(    def disconnect_server\(self\):) Tj
+T*
+(        """서버 연결 해제""") Tj
+T*
+(        self.tcp_client.disconnect\(\)) Tj
+T*
+(        self.ui.server_status_label.config\(text="연결 상태: 미연결", fg='#666'\)) Tj
+T*
+(        messagebox.showinfo\("알림", "서버 연결이 해제되었습니다."\)) Tj
+T*
+(    ) Tj
+T*
+(    def show_convert_form\(self\):) Tj
+T*
+(        """변환 폼 표시""") Tj
+T*
+(        self.hide_all_forms\(\)) Tj
+T*
+(        self.ui.convert_frame.pack\(fill='x', pady=10\)) Tj
+T*
+(        self.ui.document_header.pack_forget\(\)) Tj
+T*
+(        self.ui.index_frame.pack_forget\(\)) Tj
+T*
+(    ) Tj
+T*
+(    def show_folder_form\(self\):) Tj
+T*
+(        """폴더 관리 폼 표시""") Tj
+T*
+(        self.hide_all_forms\(\)) Tj
+T*
+(        self.ui.folder_frame.pack\(fill='x', pady=10\)) Tj
+T*
+(        self.ui.document_header.pack_forget\(\)) Tj
+T*
+(        self.ui.index_frame.pack_forget\(\)) Tj
+T*
+(        self.switch_folder_tab\('add'\)) Tj
+T*
+(    ) Tj
+T*
+(    def switch_folder_tab\(self, tab\):) Tj
+T*
+(        """폴더 관리 탭 전환""") Tj
+T*
+(        # 모든 탭 버튼 리셋) Tj
+T*
+(        self.ui.folder_tab_add.config\(bg='#f0f0f0', fg='#666'\)) Tj
+T*
+(        self.ui.folder_tab_update.config\(bg='#f0f0f0', fg='#666'\)) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 3010 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        self.ui.folder_tab_delete.config\(bg='#f0f0f0', fg='#666'\)) Tj
+T*
+(        ) Tj
+T*
+(        # 모든 섹션 숨기기) Tj
+T*
+(        self.ui.folder_add_section.pack_forget\(\)) Tj
+T*
+(        self.ui.folder_update_section.pack_forget\(\)) Tj
+T*
+(        self.ui.folder_delete_section.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        # 선택한 탭 활성화) Tj
+T*
+(        if tab == 'add':) Tj
+T*
+(            self.ui.folder_tab_add.config\(bg='#333333', fg='white'\)) Tj
+T*
+(            self.ui.folder_add_section.pack\(fill='x', pady=10\)) Tj
+T*
+(        elif tab == 'update':) Tj
+T*
+(            self.ui.folder_tab_update.config\(bg='#333333', fg='white'\)) Tj
+T*
+(            self.ui.folder_update_section.pack\(fill='x', pady=10\)) Tj
+T*
+(        elif tab == 'delete':) Tj
+T*
+(            self.ui.folder_tab_delete.config\(bg='#333333', fg='white'\)) Tj
+T*
+(            self.ui.folder_delete_section.pack\(fill='x', pady=10\)) Tj
+T*
+(    ) Tj
+T*
+(    def show_content\(self, content_type\):) Tj
+T*
+(        """콘텐츠 표시""") Tj
+T*
+(        self.hide_all_forms\(\)) Tj
+T*
+(        ) Tj
+T*
+(        if content_type == 'summary':) Tj
+T*
+(            self.ui.summary_btn.config\(bg='#333333', fg='white'\)) Tj
+T*
+(            self.ui.quiz_btn.config\(bg='#f0f0f0', fg='#666'\)) Tj
+T*
+(            self.ui.summary_frame.pack\(fill='both', expand=True, pady=10\)) Tj
+T*
+(            self.ui.quiz_frame.pack_forget\(\)) Tj
+T*
+(        elif content_type == 'quiz':) Tj
+T*
+(            self.ui.summary_btn.config\(bg='#f0f0f0', fg='#666'\)) Tj
+T*
+(            self.ui.quiz_btn.config\(bg='#333333', fg='white'\)) Tj
+T*
+(            self.ui.summary_frame.pack_forget\(\)) Tj
+T*
+(            self.ui.quiz_frame.pack\(fill='both', expand=True, pady=10\)) Tj
+T*
+(            # 퀴즈 탭을 누르는 순간 OpenAI에 퀴즈 요청 \(필요시\)) Tj
+T*
+(            self.load_quiz_if_needed\(\)) Tj
+T*
+(    ) Tj
+T*
+(    def hide_all_forms\(self\):) Tj
+T*
+(        """모든 폼 숨기기""") Tj
+T*
+(        self.ui.convert_frame.pack_forget\(\)) Tj
+T*
+(        self.ui.folder_frame.pack_forget\(\)) Tj
+T*
+(        self.ui.summary_frame.pack_forget\(\)) Tj
+T*
+(        self.ui.quiz_frame.pack_forget\(\)) Tj
+T*
+(    ) Tj
+T*
+(    def load_file_list\(self\):) Tj
+T*
+(        """서버에서 파일 목록 로드하여 프로젝트 트리에 표시""") Tj
+T*
+(        if not self.tcp_client.is_connected:) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            result = self.tcp_client.send_command\("list_files", {}\)) Tj
+T*
+(            if result.get\("status"\) == "success":) Tj
+T*
+(                files = result.get\("files", []\)) Tj
+T*
+(                # 기존 트리 항목 제거 \(루트 제외\)) Tj
+T*
+(                for item in self.ui.project_tree.get_children\(self.ui.project_root\):) Tj
+T*
+(                    self.ui.project_tree.delete\(item\)) Tj
+T*
+(                ) Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+10 0 obj
+<< /Length 2976 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                # 파일 목록 추가) Tj
+T*
+(                for file_data in files:) Tj
+T*
+(                    file_id = str\(file_data.get\('file_id'\)\)) Tj
+T*
+(                    title = file_data.get\('title', f'파일 {file_id}'\)) Tj
+T*
+(                    self.ui.project_tree.insert\() Tj
+T*
+(                        self.ui.project_root, 'end',) Tj
+T*
+(                        text=title,) Tj
+T*
+(                        tags=\('file', file_id\)) Tj
+T*
+(                    \)) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            print\(f"파일 목록 로드 오류: {e}"\)) Tj
+T*
+(    ) Tj
+T*
+(    def on_file_select\(self, event\):) Tj
+T*
+(        """파일 선택 이벤트""") Tj
+T*
+(        item = self.ui.project_tree.selection\(\)[0]) Tj
+T*
+(        tags = self.ui.project_tree.item\(item, 'tags'\)) Tj
+T*
+(        if 'file' in tags:) Tj
+T*
+(            file_id = tags[1] if len\(tags\) > 1 else None) Tj
+T*
+(            if file_id:) Tj
+T*
+(                self.load_file\(file_id\)) Tj
+T*
+(    ) Tj
+T*
+(    def load_file\(self, file_id\):) Tj
+T*
+(        """파일 로드""") Tj
+T*
+(        # 문서 헤더와 인덱스 버튼 표시) Tj
+T*
+(        self.ui.document_header.pack\(fill='x', pady=\(0, 20\)\)) Tj
+T*
+(        self.ui.index_frame.pack\(fill='x', pady=\(0, 20\)\)) Tj
+T*
+(        ) Tj
+T*
+(        # 파일 제목 업데이트) Tj
+T*
+(        item = None) Tj
+T*
+(        for i in self.ui.project_tree.get_children\(\):) Tj
+T*
+(            for j in self.ui.project_tree.get_children\(i\):) Tj
+T*
+(                for k in self.ui.project_tree.get_children\(j\):) Tj
+T*
+(                    if 'file' in self.ui.project_tree.item\(k, 'tags'\):) Tj
+T*
+(                        if self.ui.project_tree.item\(k, 'tags'\)[1] == file_id:) Tj
+T*
+(                            item = k) Tj
+T*
+(                            break) Tj
+T*
+(        ) Tj
+T*
+(        if item:) Tj
+T*
+(            title = self.ui.project_tree.item\(item, 'text'\)) Tj
+T*
+(            self.ui.document_title.config\(text=title\)) Tj
+T*
+(        ) Tj
+T*
+(        # 파일 변경 시 이전 퀴즈 데이터 초기화) Tj
+T*
+(        if self.current_file_id != int\(file_id\):) Tj
+T*
+(            self.current_quiz_data = None) Tj
+T*
+(            if hasattr\(self.ui, 'quiz_frames'\):) Tj
+T*
+(                self.build_quiz_ui\({"questions": []}\)) Tj
+T*
+(        ) Tj
+T*
+(        # 서버에서 파일 내용 로드) Tj
+T*
+(        if self.tcp_client.is_connected:) Tj
+T*
+(            result = self.tcp_client.send_command\("load_file", {"file_id": int\(file_id\)}\)) Tj
+T*
+(            if result.get\("status"\) == "success" and result.get\("file_data"\):) Tj
+T*
+(                self.current_file_id = int\(file_id\)) Tj
+T*
+(                self.current_file_data = result["file_data"]) Tj
+T*
+(                self.update_file_content\(self.current_file_data\)) Tj
+T*
+(                ) Tj
+T*
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 10 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+12 0 obj
+<< /Length 3446 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                # 해당 파일의 퀴즈 데이터만 로드 \(서버에서 file_id로 필터링됨\)) Tj
+T*
+(                quiz_data = self.current_file_data.get\("quiz"\)) Tj
+T*
+(                if quiz_data and quiz_data.get\("questions"\):) Tj
+T*
+(                    # quiz_id와 user_answer를 포함하도록 변환) Tj
+T*
+(                    quiz_data_with_ids = {) Tj
+T*
+(                        "questions": [) Tj
+T*
+(                            {) Tj
+T*
+(                                "question": q.get\("question", ""\),) Tj
+T*
+(                                "answer": q.get\("answer", ""\),) Tj
+T*
+(                                "explanation": q.get\("explanation", ""\),) Tj
+T*
+(                                "quiz_id": q.get\("quiz_id"\),) Tj
+T*
+(                                "user_answer": q.get\("user_answer", ""\)  # 이전 답안 포함) Tj
+T*
+(                            }) Tj
+T*
+(                            for q in quiz_data.get\("questions", []\)) Tj
+T*
+(                        ]) Tj
+T*
+(                    }) Tj
+T*
+(                    self.current_quiz_data = quiz_data_with_ids) Tj
+T*
+(                    # 퀴즈 UI 업데이트 \(퀴즈 탭이 보이지 않아도 데이터는 준비\)) Tj
+T*
+(                    if hasattr\(self.ui, 'quiz_frames'\):) Tj
+T*
+(                        self.build_quiz_ui\(quiz_data_with_ids\)) Tj
+T*
+(                else:) Tj
+T*
+(                    # 해당 파일에 퀴즈가 없으면 빈 상태로 초기화) Tj
+T*
+(                    self.current_quiz_data = {"questions": []}) Tj
+T*
+(                    if hasattr\(self.ui, 'quiz_frames'\):) Tj
+T*
+(                        self.build_quiz_ui\({"questions": []}\)) Tj
+T*
+(        ) Tj
+T*
+(        # 기본적으로 요약 섹션 표시) Tj
+T*
+(        self.show_content\('summary'\)) Tj
+T*
+(    ) Tj
+T*
+(    def update_file_content\(self, file_data\):) Tj
+T*
+(        """파일 내용 업데이트""") Tj
+T*
+(        if file_data.get\("keywords"\):) Tj
+T*
+(            self.ui.keyword_label.config\(text=file_data["keywords"]\)) Tj
+T*
+(        if file_data.get\("summary"\):) Tj
+T*
+(            self.ui.summary_label.config\(text=file_data["summary"]\)) Tj
+T*
+(        if file_data.get\("text"\):) Tj
+T*
+(            self.ui.conversion_text.config\(state=NORMAL\)) Tj
+T*
+(            self.ui.conversion_text.delete\('1.0', END\)) Tj
+T*
+(            self.ui.conversion_text.insert\('1.0', file_data["text"]\)) Tj
+T*
+(            self.ui.conversion_text.config\(state=DISABLED\)) Tj
+T*
+(        # 퀴즈 데이터는 load_file에서 처리하므로 여기서는 업데이트하지 않음) Tj
+T*
+(    ) Tj
+T*
+(    def select_audio_file\(self\):) Tj
+T*
+(        """오디오 파일 선택""") Tj
+T*
+(        file_path = filedialog.askopenfilename\() Tj
+T*
+(            title="오디오 파일 선택",) Tj
+T*
+(            filetypes=[\("오디오 파일", "*.mp3 *.wav *.m4a *.ogg *.flac"\), \("모든 파일", "*.*"\)]) Tj
+T*
+(        \)) Tj
+T*
+(        if file_path:) Tj
+T*
+(            self.selected_audio_file = file_path) Tj
+T*
+(            filename = os.path.basename\(file_path\)) Tj
+T*
+(            self.ui.audio_file_label.config\(text=f"선택된 파일: {filename}"\)) Tj
+T*
+(    ) Tj
+T*
+(    def handle_convert\(self\):) Tj
+T*
+(        """오디오 변환 처리 \(클라이언트에서 OpenAI STT 직접 처리\)""") Tj
+T*
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 12 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+14 0 obj
+<< /Length 3144 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        if not hasattr\(self, 'selected_audio_file'\) or not self.selected_audio_file:) Tj
+T*
+(            messagebox.showwarning\("경고", "파일을 선택해주세요."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        # 클라이언트에서 OpenAI STT 변환 처리) Tj
+T*
+(        try:) Tj
+T*
+(            from ai_services import STT_AVAILABLE, STT_ERROR, transcribe_audio) Tj
+T*
+(            ) Tj
+T*
+(            if not STT_AVAILABLE:) Tj
+T*
+(                error_msg = "OpenAI API를 사용할 수 없습니다.") Tj
+T*
+(                if STT_ERROR:) Tj
+T*
+(                    error_msg += f"\\n오류 상세: {STT_ERROR}") Tj
+T*
+(                error_msg += "\\n\\n다음을 확인해주세요:") Tj
+T*
+(                error_msg += "\\n1. OpenAI API 키가 .env 파일에 설정되어 있는지 확인") Tj
+T*
+(                error_msg += "\\n2. openai 패키지가 설치되어 있는지 확인: pip install openai") Tj
+T*
+(                messagebox.showerror\("STT 오류", error_msg\)) Tj
+T*
+(                return) Tj
+T*
+(            ) Tj
+T*
+(            # 1단계: OpenAI STT 변환 \(클라이언트에서 직접 처리\)) Tj
+T*
+(            filename = os.path.basename\(self.selected_audio_file\)) Tj
+T*
+(            self.ui.convert_result_label.config\(text="🔄 OpenAI STT 변환 중... \(시간이 걸릴 수 있습니다\)", fg='blue'\)) Tj
+T*
+(            self.ui.root.update\(\)) Tj
+T*
+(            ) Tj
+T*
+(            try:) Tj
+T*
+(                text = transcribe_audio\(self.selected_audio_file, language="ko"\)) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                error_msg = f"STT 변환 실패: {str\(e\)}") Tj
+T*
+(                self.ui.convert_result_label.config\(text=f"❌ {error_msg}", fg='red'\)) Tj
+T*
+(                messagebox.showerror\("STT 오류", error_msg\)) Tj
+T*
+(                return) Tj
+T*
+() Tj
+T*
+(            if not text:) Tj
+T*
+(                messagebox.showwarning\("경고", "변환된 텍스트가 없습니다."\)) Tj
+T*
+(                return) Tj
+T*
+() Tj
+T*
+(            # 변환된 텍스트를 UI에 표시) Tj
+T*
+(            self.ui.conversion_text.config\(state=NORMAL\)) Tj
+T*
+(            self.ui.conversion_text.delete\('1.0', END\)) Tj
+T*
+(            self.ui.conversion_text.insert\('1.0', text\)) Tj
+T*
+(            self.ui.conversion_text.config\(state=DISABLED\)) Tj
+T*
+() Tj
+T*
+(            # 2단계: OpenAI로 요약/키워드 생성 \(클라이언트에서 직접 호출\)) Tj
+T*
+(            summary_text = "") Tj
+T*
+(            keyword_text = "") Tj
+T*
+(            if OPENAI_AVAILABLE:) Tj
+T*
+(                try:) Tj
+T*
+(                    self.ui.convert_result_label.config\(text="🤖 OpenAI로 키워드/요약 생성 중...", fg='blue'\)) Tj
+T*
+(                    self.ui.root.update\(\)) Tj
+T*
+() Tj
+T*
+(                    # 키워드) Tj
+T*
+(                    keyword_text = generate_keywords\(text\)) Tj
+T*
+() Tj
+T*
+(                    # 요약) Tj
+T*
+(                    summary_text = generate_summary\(text\)) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 14 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+16 0 obj
+<< /Length 3426 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                    # UI에 반영) Tj
+T*
+(                    if keyword_text:) Tj
+T*
+(                        self.ui.keyword_label.config\(text=keyword_text\)) Tj
+T*
+(                    if summary_text:) Tj
+T*
+(                        self.ui.summary_label.config\(text=summary_text\)) Tj
+T*
+() Tj
+T*
+(                except Exception as e:) Tj
+T*
+(                    # OpenAI 오류는 STT 결과 사용에는 영향 없게만 처리) Tj
+T*
+(                    self.ui.convert_result_label.config\() Tj
+T*
+(                        text=f"STT 완료, OpenAI 요약/키워드 생성 중 오류: {e}", fg='orange') Tj
+T*
+(                    \)) Tj
+T*
+() Tj
+T*
+(            # 3단계: 서버에 텍스트/요약/키워드 저장 요청 및 프로젝트 기록 반영) Tj
+T*
+(            if not self.tcp_client.is_connected:) Tj
+T*
+(                # 서버 연결 재시도) Tj
+T*
+(                from env_utils import DEFAULT_HOST, DEFAULT_PORT) Tj
+T*
+(                if not self.tcp_client.connect\(DEFAULT_HOST, DEFAULT_PORT\):) Tj
+T*
+(                    self.ui.convert_result_label.config\() Tj
+T*
+(                        text="✅ 변환 완료 \(서버 연결 실패로 저장하지 않음\)", ) Tj
+T*
+(                        fg='orange') Tj
+T*
+(                    \)) Tj
+T*
+(                    messagebox.showwarning\("경고", "서버에 연결할 수 없어 데이터를 저장하지 못했습니다."\)) Tj
+T*
+(                    return) Tj
+T*
+(            ) Tj
+T*
+(            self.ui.convert_result_label.config\(text="📤 DB에 저장 중...", fg='blue'\)) Tj
+T*
+(            self.ui.root.update\(\)) Tj
+T*
+(            ) Tj
+T*
+(            save_result = self.tcp_client.send_command\("save_text", {) Tj
+T*
+(                "filename": filename,) Tj
+T*
+(                "text": text,) Tj
+T*
+(                "keywords": keyword_text,) Tj
+T*
+(                "summary": summary_text) Tj
+T*
+(            }\)) Tj
+T*
+(            ) Tj
+T*
+(            if save_result.get\("status"\) == "success":) Tj
+T*
+(                self.ui.convert_result_label.config\(text="✅ 변환 완료 및 DB 저장 완료", fg='green'\)) Tj
+T*
+(                # 프로젝트 기록 트리 업데이트 \(전체 목록 다시 로드\)) Tj
+T*
+(                self.load_file_list\(\)) Tj
+T*
+(                # 현재 파일 ID 저장) Tj
+T*
+(                file_id = str\(save_result.get\("file_id"\)\)) Tj
+T*
+(                if file_id:) Tj
+T*
+(                    self.current_file_id = int\(file_id\)) Tj
+T*
+(            else:) Tj
+T*
+(                error_msg = save_result.get\('message', '알 수 없는 오류'\)) Tj
+T*
+(                self.ui.convert_result_label.config\() Tj
+T*
+(                    text=f"✅ 변환 완료 \(DB 저장 실패: {error_msg}\)",) Tj
+T*
+(                    fg='red') Tj
+T*
+(                \)) Tj
+T*
+(                messagebox.showerror\("DB 저장 오류", f"데이터베이스 저장에 실패했습니다:\\n{error_msg}"\)) Tj
+T*
+(                ) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            import traceback) Tj
+T*
+(            traceback.print_exc\(\)) Tj
+T*
+(            self.ui.convert_result_label.config\(text=f"❌ STT/요약 처리 오류: {e}", fg='red'\)) Tj
+T*
+(            messagebox.showerror\("오류", f"STT/요약 처리 중 오류가 발생했습니다:\\n{e}"\)) Tj
+T*
+ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 16 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+18 0 obj
+<< /Length 3035 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(    ) Tj
+T*
+(    def handle_folder_add\(self\):) Tj
+T*
+(        """폴더 추가""") Tj
+T*
+(        if not self.current_user_email:) Tj
+T*
+(            messagebox.showerror\("오류", "사용자 이메일이 설정되지 않았습니다. 로그인이 필요합니다."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        folder_name = self.ui.folder_name_add_entry.get\(\).strip\(\)) Tj
+T*
+(        if not folder_name:) Tj
+T*
+(            messagebox.showwarning\("경고", "폴더 이름을 입력해주세요."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        result = self.tcp_client.send_command\("manage_folder", {) Tj
+T*
+(            "action": "create",) Tj
+T*
+(            "folder_name": folder_name,) Tj
+T*
+(            "user_email": self.current_user_email) Tj
+T*
+(        }\)) Tj
+T*
+(        ) Tj
+T*
+(        if result.get\("status"\) == "success":) Tj
+T*
+(            self.ui.folder_add_result.config\(text=f"✅ {result.get\('message', '폴더가 추가되었습니다.'\)}", fg='green'\)) Tj
+T*
+(        else:) Tj
+T*
+(            self.ui.folder_add_result.config\(text=f"❌ {result.get\('message', '폴더 추가 실패'\)}", fg='red'\)) Tj
+T*
+(    ) Tj
+T*
+(    def handle_folder_update\(self\):) Tj
+T*
+(        """폴더 수정""") Tj
+T*
+(        if not self.current_user_email:) Tj
+T*
+(            messagebox.showerror\("오류", "사용자 이메일이 설정되지 않았습니다. 로그인이 필요합니다."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        old_name = self.ui.folder_name_old_entry.get\(\).strip\(\)) Tj
+T*
+(        new_name = self.ui.folder_name_new_entry.get\(\).strip\(\)) Tj
+T*
+(        ) Tj
+T*
+(        if not old_name or not new_name:) Tj
+T*
+(            messagebox.showwarning\("경고", "기존 폴더 이름과 새 폴더 이름을 모두 입력해주세요."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        result = self.tcp_client.send_command\("manage_folder", {) Tj
+T*
+(            "action": "update",) Tj
+T*
+(            "folder_name": old_name,) Tj
+T*
+(            "user_email": self.current_user_email,) Tj
+T*
+(            "new_folder_name": new_name) Tj
+T*
+(        }\)) Tj
+T*
+(        ) Tj
+T*
+(        if result.get\("status"\) == "success":) Tj
+T*
+(            self.ui.folder_update_result.config\(text=f"✅ {result.get\('message', '폴더가 수정되었습니다.'\)}", fg='green'\)) Tj
+T*
+(        else:) Tj
+T*
+(            self.ui.folder_update_result.config\(text=f"❌ {result.get\('message', '폴더 수정 실패'\)}", fg='red'\)) Tj
+T*
+(    ) Tj
+T*
+(    def handle_folder_delete\(self\):) Tj
+T*
+(        """폴더 삭제""") Tj
+T*
+(        if not self.current_user_email:) Tj
+T*
+(            messagebox.showerror\("오류", "사용자 이메일이 설정되지 않았습니다. 로그인이 필요합니다."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        folder_name = self.ui.folder_name_delete_entry.get\(\).strip\(\)) Tj
+T*
+ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 18 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+20 0 obj
+<< /Length 2968 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        if not folder_name:) Tj
+T*
+(            messagebox.showwarning\("경고", "폴더 이름을 입력해주세요."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        if not messagebox.askyesno\("확인", f'"{folder_name}" 폴더를 정말 삭제하시겠습니까?'\):) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        result = self.tcp_client.send_command\("manage_folder", {) Tj
+T*
+(            "action": "delete",) Tj
+T*
+(            "folder_name": folder_name,) Tj
+T*
+(            "user_email": self.current_user_email) Tj
+T*
+(        }\)) Tj
+T*
+(        ) Tj
+T*
+(        if result.get\("status"\) == "success":) Tj
+T*
+(            self.ui.folder_delete_result.config\(text=f"✅ {result.get\('message', '폴더가 삭제되었습니다.'\)}", fg='green'\)) Tj
+T*
+(        else:) Tj
+T*
+(            self.ui.folder_delete_result.config\(text=f"❌ {result.get\('message', '폴더 삭제 실패'\)}", fg='red'\)) Tj
+T*
+(    ) Tj
+T*
+(    def score_quiz\(self\):) Tj
+T*
+(        """퀴즈 채점 및 답안 DB 저장""") Tj
+T*
+(        if not getattr\(self.ui, "quiz_frames", None\):) Tj
+T*
+(            messagebox.showinfo\("알림", "채점할 퀴즈가 없습니다."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        if not self.current_file_id:) Tj
+T*
+(            messagebox.showwarning\("경고", "파일이 선택되지 않았습니다."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        correct_count = 0) Tj
+T*
+(        total_count = len\(self.ui.quiz_frames\)) Tj
+T*
+(        quiz_results = []  # DB 저장용) Tj
+T*
+(        ) Tj
+T*
+(        for frame in self.ui.quiz_frames:) Tj
+T*
+(            user_answer = frame.input_box.get\('1.0', END\).strip\(\)) Tj
+T*
+(            correct_answer = getattr\(frame, "correct_answer", ""\).strip\(\)) Tj
+T*
+(            explanation = getattr\(frame, "explanation", ""\)) Tj
+T*
+(            quiz_id = getattr\(frame, "quiz_id", None\)) Tj
+T*
+(            ) Tj
+T*
+(            # 간단한 포함 여부 기준 비교 \(공백/대소문자 무시\)) Tj
+T*
+(            ua_norm = user_answer.replace\(" ", ""\).lower\(\)) Tj
+T*
+(            ca_norm = correct_answer.replace\(" ", ""\).lower\(\)) Tj
+T*
+(            ) Tj
+T*
+(            correct_is = False) Tj
+T*
+(            if ua_norm and ca_norm and ca_norm in ua_norm:) Tj
+T*
+(                frame.result_label.config\(text="✅ 정답입니다!", fg='green'\)) Tj
+T*
+(                correct_count += 1) Tj
+T*
+(                correct_is = True) Tj
+T*
+(            else:) Tj
+T*
+(                msg = f"❌ 오답입니다.\\n정답: {correct_answer}") Tj
+T*
+(                if explanation:) Tj
+T*
+(                    msg += f"\\n해설: {explanation}") Tj
+T*
+(                frame.result_label.config\(text=msg, fg='red'\)) Tj
+T*
+(            ) Tj
+T*
+(            # DB 저장용 데이터 수집) Tj
+T*
+(            if quiz_id:) Tj
+T*
+ET
+endstream
+endobj
+21 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 20 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+22 0 obj
+<< /Length 3409 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                quiz_results.append\({) Tj
+T*
+(                    "quiz_id": quiz_id,) Tj
+T*
+(                    "user_answer": user_answer,) Tj
+T*
+(                    "correct_is": correct_is) Tj
+T*
+(                }\)) Tj
+T*
+(        ) Tj
+T*
+(        if total_count > 0:) Tj
+T*
+(            percentage = int\(\(correct_count / total_count\) * 100\)) Tj
+T*
+(            self.ui.final_score_label.config\() Tj
+T*
+(                text=f"🎯 최종 점수: {correct_count} / {total_count} 문제 \({percentage}점\)") Tj
+T*
+(            \)) Tj
+T*
+(            self.ui.final_score_label.pack\(pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        # 서버에 각 퀴즈의 답안 저장) Tj
+T*
+(        if self.tcp_client.is_connected and quiz_results:) Tj
+T*
+(            result = self.tcp_client.send_command\("save_score", {) Tj
+T*
+(                "file_id": self.current_file_id,) Tj
+T*
+(                "quiz_results": quiz_results) Tj
+T*
+(            }\)) Tj
+T*
+(            if result.get\("status"\) == "success":) Tj
+T*
+(                # 저장 성공 후 current_quiz_data 업데이트 \(답안 반영\)) Tj
+T*
+(                for i, q in enumerate\(self.current_quiz_data.get\("questions", []\)\):) Tj
+T*
+(                    for quiz_result in quiz_results:) Tj
+T*
+(                        if q.get\("quiz_id"\) == quiz_result.get\("quiz_id"\):) Tj
+T*
+(                            self.current_quiz_data["questions"][i]["user_answer"] = quiz_result.get\("user_answer", ""\)) Tj
+T*
+(                            break) Tj
+T*
+() Tj
+T*
+(    def load_quiz_if_needed\(self\):) Tj
+T*
+(        """현재 파일에 대해 DB에서 퀴즈 로드 \(퀴즈 탭을 열 때 호출\)""") Tj
+T*
+(        if not self.current_file_id:) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        # 이미 로드된 퀴즈 데이터가 있고 현재 파일과 일치하면 그것을 사용) Tj
+T*
+(        if self.current_quiz_data and self.current_quiz_data.get\("questions"\):) Tj
+T*
+(            self.build_quiz_ui\(self.current_quiz_data\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        # 서버에서 현재 file_id에 해당하는 퀴즈만 로드 \(다른 파일의 퀴즈가 표시되지 않도록\)) Tj
+T*
+(        if self.tcp_client.is_connected:) Tj
+T*
+(            result = self.tcp_client.send_command\("load_quizzes", {"file_id": self.current_file_id}\)) Tj
+T*
+(            if result.get\("status"\) == "success":) Tj
+T*
+(                quizzes = result.get\("quizzes", []\)) Tj
+T*
+(                if quizzes:) Tj
+T*
+(                    # DB에서 로드한 퀴즈를 UI에 표시 \(file_id로 필터링된 퀴즈만, 이전 답안 포함\)) Tj
+T*
+(                    quiz_data = {) Tj
+T*
+(                        "questions": [) Tj
+T*
+(                            {) Tj
+T*
+(                                "question": q.get\("question", ""\),) Tj
+T*
+(                                "answer": q.get\("correct_answer", ""\),) Tj
+T*
+(                                "explanation": q.get\("explanation", ""\),) Tj
+T*
+(                                "quiz_id": q.get\("quiz_id"\),) Tj
+T*
+(                                "user_answer": q.get\("user_answer", ""\)  # 이전 답안 포함) Tj
+T*
+(                            }) Tj
+T*
+(                            for q in quizzes) Tj
+T*
+(                        ]) Tj
+T*
+ET
+endstream
+endobj
+23 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 22 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+24 0 obj
+<< /Length 2883 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                    }) Tj
+T*
+(                    self.current_quiz_data = quiz_data) Tj
+T*
+(                    self.build_quiz_ui\(quiz_data\)) Tj
+T*
+(                    return) Tj
+T*
+(        ) Tj
+T*
+(        # 퀴즈가 없으면 빈 상태로 표시) Tj
+T*
+(        self.current_quiz_data = {"questions": []}) Tj
+T*
+(        self.build_quiz_ui\({"questions": []}\)) Tj
+T*
+(    ) Tj
+T*
+(    def add_quiz_question\(self\):) Tj
+T*
+(        """퀴즈 한 문제 추가 \(OpenAI로 생성 후 DB에 저장\)""") Tj
+T*
+(        if not self.current_file_id or not self.current_file_data:) Tj
+T*
+(            messagebox.showwarning\("경고", "파일을 먼저 선택해주세요."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        if not self.current_file_data.get\("text"\):) Tj
+T*
+(            messagebox.showwarning\("경고", "퀴즈를 생성할 텍스트가 없습니다."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        if not OPENAI_AVAILABLE:) Tj
+T*
+(            messagebox.showerror\() Tj
+T*
+(                "오류",) Tj
+T*
+(                f"OpenAI API를 사용할 수 없습니다.\\n\\n{OPENAI_ERROR or 'OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.'}") Tj
+T*
+(            \)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        if not self.tcp_client.is_connected:) Tj
+T*
+(            messagebox.showerror\("오류", "서버에 연결되어 있지 않습니다."\)) Tj
+T*
+(            return) Tj
+T*
+(        ) Tj
+T*
+(        text = self.current_file_data["text"]) Tj
+T*
+(        ) Tj
+T*
+(        # 기존 퀴즈 목록 가져오기 \(중복 방지\)) Tj
+T*
+(        existing_questions = []) Tj
+T*
+(        if hasattr\(self.ui, 'quiz_frames'\) and self.ui.quiz_frames:) Tj
+T*
+(            for frame in self.ui.quiz_frames:) Tj
+T*
+(                if hasattr\(frame, 'question_text'\):) Tj
+T*
+(                    existing_questions.append\({"question": frame.question_text}\)) Tj
+T*
+(        ) Tj
+T*
+(        try:) Tj
+T*
+(            # 한 문제씩 생성) Tj
+T*
+(            self.ui.add_quiz_btn.config\(state='disabled', text="생성 중..."\)) Tj
+T*
+(            self.ui.root.update\(\)) Tj
+T*
+(            ) Tj
+T*
+(            quiz_item = generate_single_quiz\(text, existing_questions if existing_questions else None\)) Tj
+T*
+(            ) Tj
+T*
+(            # 서버로 전송하여 DB에 저장) Tj
+T*
+(            result = self.tcp_client.send_command\("generate_single_quiz", {) Tj
+T*
+(                "file_id": self.current_file_id,) Tj
+T*
+(                "text": text,) Tj
+T*
+(                "question": quiz_item.get\("question", ""\),) Tj
+T*
+(                "answer": quiz_item.get\("answer", ""\),) Tj
+T*
+(                "explanation": quiz_item.get\("explanation", ""\)) Tj
+T*
+(            }\)) Tj
+T*
+(            ) Tj
+T*
+ET
+endstream
+endobj
+25 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 24 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+26 0 obj
+<< /Length 3271 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(            if result.get\("status"\) == "success":) Tj
+T*
+(                quiz_id = result.get\("quiz_id"\)) Tj
+T*
+(                # UI에 새 퀴즈 추가) Tj
+T*
+(                self.add_quiz_to_ui\(quiz_item, quiz_id\)) Tj
+T*
+(                ) Tj
+T*
+(                # current_quiz_data 업데이트 \(클라이언트 재시작 후에도 유지되도록\)) Tj
+T*
+(                if not self.current_quiz_data:) Tj
+T*
+(                    self.current_quiz_data = {"questions": []}) Tj
+T*
+(                self.current_quiz_data["questions"].append\({) Tj
+T*
+(                    "question": quiz_item.get\("question", ""\),) Tj
+T*
+(                    "answer": quiz_item.get\("answer", ""\),) Tj
+T*
+(                    "explanation": quiz_item.get\("explanation", ""\),) Tj
+T*
+(                    "quiz_id": quiz_id) Tj
+T*
+(                }\)) Tj
+T*
+(                ) Tj
+T*
+(                messagebox.showinfo\("성공", "퀴즈가 생성되어 DB에 저장되었습니다."\)) Tj
+T*
+(            else:) Tj
+T*
+(                messagebox.showerror\("오류", f"퀴즈 저장 실패: {result.get\('message', ''\)}"\)) Tj
+T*
+(            ) Tj
+T*
+(        except Exception as e:) Tj
+T*
+(            import traceback) Tj
+T*
+(            traceback.print_exc\(\)) Tj
+T*
+(            messagebox.showerror\("오류", f"퀴즈 생성 중 오류가 발생했습니다:\\n{e}"\)) Tj
+T*
+(        finally:) Tj
+T*
+(            self.ui.add_quiz_btn.config\(state='normal', text="➕ 다음 문제 생성"\)) Tj
+T*
+() Tj
+T*
+(    def build_quiz_ui\(self, quiz_data\):) Tj
+T*
+(        """DB에서 받은 퀴즈 데이터를 기준으로 UI 구성""") Tj
+T*
+(        # 기존 퀴즈 위젯 제거 \(버튼과 구분선은 유지\)) Tj
+T*
+(        for child in self.ui.quiz_content.winfo_children\(\):) Tj
+T*
+(            if isinstance\(child, LabelFrame\):) Tj
+T*
+(                child.destroy\(\)) Tj
+T*
+(        self.ui.quiz_frames.clear\(\)) Tj
+T*
+(        self.ui.final_score_label.config\(text=""\)) Tj
+T*
+(        self.ui.final_score_label.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        questions = quiz_data.get\("questions", []\)) Tj
+T*
+(        for idx, q in enumerate\(questions, start=1\):) Tj
+T*
+(            quiz_id = q.get\("quiz_id"\)) Tj
+T*
+(            self.add_quiz_to_ui\(q, quiz_id, idx\)) Tj
+T*
+(    ) Tj
+T*
+(    def add_quiz_to_ui\(self, quiz_item, quiz_id=None, index=None\):) Tj
+T*
+(        """퀴즈 한 문제를 UI에 추가 \(이전 답안 포함\)""") Tj
+T*
+(        if index is None:) Tj
+T*
+(            index = len\(self.ui.quiz_frames\) + 1) Tj
+T*
+(        ) Tj
+T*
+(        frame = LabelFrame\(self.ui.quiz_content, text=f"문제 {index}",) Tj
+T*
+(                           font=self.ui.heading_font, bg='#ffffff', padx=20, pady=15\)) Tj
+T*
+(        # add_quiz_btn 앞에 삽입) Tj
+T*
+(        frame.pack\(fill='both', expand=True, pady=10, before=self.ui.add_quiz_btn\)) Tj
+T*
+(        ) Tj
+T*
+(        # 문제 텍스트 라벨) Tj
+T*
+(        question_text = quiz_item.get\("question", ""\)) Tj
+T*
+(        question_label = Label\(frame, text=question_text, font=self.ui.normal_font,) Tj
+T*
+(                              bg='#ffffff', justify='left'\)) Tj
+T*
+ET
+endstream
+endobj
+27 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 26 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+28 0 obj
+<< /Length 1733 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_handlers.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        question_label.pack\(anchor='w', pady=5, fill='x'\)) Tj
+T*
+(        ) Tj
+T*
+(        # 문제 텍스트가 프레임 폭에 맞게 보이도록 wraplength 동적 조정) Tj
+T*
+(        def _update_question_wrap\(event, label=question_label\):) Tj
+T*
+(            w = event.width - 50) Tj
+T*
+(            if w > 200:) Tj
+T*
+(                label.config\(wraplength=w\)) Tj
+T*
+(        frame.bind\("<Configure>", _update_question_wrap\)) Tj
+T*
+(        ) Tj
+T*
+(        # 답안 입력창 \(이전 답안이 있으면 표시\)) Tj
+T*
+(        input_box = scrolledtext.ScrolledText\(frame, height=8,) Tj
+T*
+(                                              font=self.ui.normal_font, wrap='word'\)) Tj
+T*
+(        input_box.pack\(fill='both', expand=True, pady=10, padx=5\)) Tj
+T*
+(        ) Tj
+T*
+(        # 이전 답안이 있으면 입력창에 표시) Tj
+T*
+(        user_answer = quiz_item.get\("user_answer", ""\)) Tj
+T*
+(        if user_answer:) Tj
+T*
+(            input_box.insert\('1.0', user_answer\)) Tj
+T*
+(        ) Tj
+T*
+(        result_label = Label\(frame, text="", font=self.ui.normal_font, bg='#ffffff'\)) Tj
+T*
+(        result_label.pack\(anchor='w', pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        # 정답/해설/퀴즈ID 저장) Tj
+T*
+(        frame.input_box = input_box) Tj
+T*
+(        frame.result_label = result_label) Tj
+T*
+(        frame.correct_answer = quiz_item.get\("answer", ""\)) Tj
+T*
+(        frame.explanation = quiz_item.get\("explanation", ""\)) Tj
+T*
+(        frame.quiz_id = quiz_id) Tj
+T*
+(        frame.question_text = question_text) Tj
+T*
+(        ) Tj
+T*
+(        self.ui.quiz_frames.append\(frame\)) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+29 0 obj
+<< /Type /Page /Parent 30 0 R /MediaBox [0 0 612 792] /Contents 28 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+30 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R 21 0 R 23 0 R 25 0 R 27 0 R 29 0 R] /Count 14 >>
+endobj
+31 0 obj
+<< /Type /Catalog /Pages 30 0 R >>
+endobj
+xref
+0 32
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000003191 00000 n 
+0000003318 00000 n 
+0000006081 00000 n 
+0000006208 00000 n 
+0000009144 00000 n 
+0000009271 00000 n 
+0000012333 00000 n 
+0000012460 00000 n 
+0000015489 00000 n 
+0000015618 00000 n 
+0000019117 00000 n 
+0000019246 00000 n 
+0000022443 00000 n 
+0000022572 00000 n 
+0000026051 00000 n 
+0000026180 00000 n 
+0000029268 00000 n 
+0000029397 00000 n 
+0000032418 00000 n 
+0000032547 00000 n 
+0000036009 00000 n 
+0000036138 00000 n 
+0000039074 00000 n 
+0000039203 00000 n 
+0000042527 00000 n 
+0000042656 00000 n 
+0000044442 00000 n 
+0000044571 00000 n 
+0000044718 00000 n 
+trailer
+<< /Size 32 /Root 31 0 R >>
+startxref
+44769
+%%EOF

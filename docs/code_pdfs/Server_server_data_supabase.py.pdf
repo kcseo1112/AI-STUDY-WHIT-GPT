@@ -1,0 +1,1151 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2634 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: Server/server_data_supabase.py) Tj
+T*
+(# server_data_supabase.py) Tj
+T*
+(# 서버 데이터 관리 모듈 \(Supabase 연동 - ERD 구조\)) Tj
+T*
+() Tj
+T*
+(import os) Tj
+T*
+(import sys) Tj
+T*
+(import json) Tj
+T*
+(from datetime import datetime) Tj
+T*
+(sys.path.append\(os.path.dirname\(os.path.dirname\(os.path.abspath\(__file__\)\)\)\)) Tj
+T*
+(from supabase_client import supabase, SUPABASE_AVAILABLE) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(class ServerDataManager:) Tj
+T*
+(    """서버 데이터 관리 클래스 \(Supabase 사용 - ERD 구조\)""") Tj
+T*
+(    ) Tj
+T*
+(    def __init__\(self\):) Tj
+T*
+(        self.supabase = supabase) Tj
+T*
+(        self.use_supabase = SUPABASE_AVAILABLE) Tj
+T*
+(        ) Tj
+T*
+(        if not self.use_supabase:) Tj
+T*
+(            print\("경고: Supabase를 사용할 수 없습니다. JSON 파일 모드로 폴백합니다."\)) Tj
+T*
+(            self._init_json_fallback\(\)) Tj
+T*
+(        else:) Tj
+T*
+(            print\("Supabase 데이터베이스 모드로 초기화되었습니다. \(ERD 구조\)"\)) Tj
+T*
+(    ) Tj
+T*
+(    def _init_json_fallback\(self\):) Tj
+T*
+(        """JSON 파일 폴백 모드 초기화""") Tj
+T*
+(        from env_utils import DATA_DIR) Tj
+T*
+(        self.folders_file = os.path.join\(DATA_DIR, "folders.json"\)) Tj
+T*
+(        self.files_file = os.path.join\(DATA_DIR, "files.json"\)) Tj
+T*
+(        self.quizzes_file = os.path.join\(DATA_DIR, "quizzes.json"\)) Tj
+T*
+(        os.makedirs\(DATA_DIR, exist_ok=True\)) Tj
+T*
+(        self.load_data\(\)) Tj
+T*
+(    ) Tj
+T*
+(    def load_data\(self\):) Tj
+T*
+(        """데이터 로드 \(JSON 폴백용\)""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            return  # Supabase는 실시간으로 데이터를 가져오므로 로드 불필요) Tj
+T*
+(        ) Tj
+T*
+(        # JSON 폴백 모드) Tj
+T*
+(        if os.path.exists\(self.folders_file\):) Tj
+T*
+(            with open\(self.folders_file, 'r', encoding='utf-8'\) as f:) Tj
+T*
+(                self._folders = json.load\(f\)) Tj
+T*
+(        else:) Tj
+T*
+(            self._folders = {}) Tj
+T*
+(        ) Tj
+T*
+(        if os.path.exists\(self.files_file\):) Tj
+T*
+(            with open\(self.files_file, 'r', encoding='utf-8'\) as f:) Tj
+T*
+(                self._files = json.load\(f\)) Tj
+T*
+(        else:) Tj
+T*
+(            self._files = {}) Tj
+T*
+(        ) Tj
+T*
+(        if os.path.exists\(self.quizzes_file\):) Tj
+T*
+(            with open\(self.quizzes_file, 'r', encoding='utf-8'\) as f:) Tj
+T*
+(                self._quizzes = json.load\(f\)) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 3075 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        else:) Tj
+T*
+(            self._quizzes = {}) Tj
+T*
+(    ) Tj
+T*
+(    def save_data\(self\):) Tj
+T*
+(        """데이터 저장 \(JSON 폴백용\)""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            return  # Supabase는 각 작업마다 저장되므로 일괄 저장 불필요) Tj
+T*
+(        ) Tj
+T*
+(        # JSON 폴백 모드) Tj
+T*
+(        with open\(self.folders_file, 'w', encoding='utf-8'\) as f:) Tj
+T*
+(            json.dump\(self._folders, f, ensure_ascii=False, indent=2\)) Tj
+T*
+(        with open\(self.files_file, 'w', encoding='utf-8'\) as f:) Tj
+T*
+(            json.dump\(self._files, f, ensure_ascii=False, indent=2\)) Tj
+T*
+(        with open\(self.quizzes_file, 'w', encoding='utf-8'\) as f:) Tj
+T*
+(            json.dump\(self._quizzes, f, ensure_ascii=False, indent=2\)) Tj
+T*
+(    ) Tj
+T*
+(    # === 로그인 관련 메서드 \(Folder 테이블 사용\) ===) Tj
+T*
+(    ) Tj
+T*
+(    def get_user_by_email_password\(self, email, password\):) Tj
+T*
+(        """이메일과 비밀번호로 사용자 조회 \(Folder 테이블\)""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Folder'\).select\('*'\).eq\('email', email\).eq\('password', password\).execute\(\)) Tj
+T*
+(                if result.data and len\(result.data\) > 0:) Tj
+T*
+(                    return result.data[0]  # 첫 번째 매칭되는 폴더 반환) Tj
+T*
+(                return None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"사용자 조회 오류: {e}"\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            # JSON 폴백 모드) Tj
+T*
+(            for folder_id, folder_data in self._folders.items\(\):) Tj
+T*
+(                if folder_data.get\('email'\) == email and folder_data.get\('password'\) == password:) Tj
+T*
+(                    return folder_data) Tj
+T*
+(            return None) Tj
+T*
+(    ) Tj
+T*
+(    def get_user_folders\(self, email\):) Tj
+T*
+(        """사용자의 모든 폴더 조회""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Folder'\).select\('*'\).eq\('email', email\).execute\(\)) Tj
+T*
+(                return result.data if result.data else []) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"폴더 조회 오류: {e}"\)) Tj
+T*
+(                return []) Tj
+T*
+(        else:) Tj
+T*
+(            folders = []) Tj
+T*
+(            for folder_id, folder_data in self._folders.items\(\):) Tj
+T*
+(                if folder_data.get\('email'\) == email:) Tj
+T*
+(                    folders.append\(folder_data\)) Tj
+T*
+(            return folders) Tj
+T*
+(    ) Tj
+T*
+(    def create_user_with_default_folder\(self, username, email, password, default_folder_title="메인파일"\):) Tj
+T*
+(        """새 사용자 생성 및 기본 폴더 생성 \(Folder 테이블\)""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 2636 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(            try:) Tj
+T*
+(                # 기본 폴더 생성 \(p_folder_id는 NULL\)) Tj
+T*
+(                result = self.supabase.table\('Folder'\).insert\({) Tj
+T*
+(                    'p_folder_id': None,) Tj
+T*
+(                    'title': default_folder_title,) Tj
+T*
+(                    'user_name': username,) Tj
+T*
+(                    'email': email,) Tj
+T*
+(                    'password': password) Tj
+T*
+(                }\).execute\(\)) Tj
+T*
+(                if result.data:) Tj
+T*
+(                    return result.data[0]) Tj
+T*
+(                return None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"사용자 생성 오류: {e}"\)) Tj
+T*
+(                import traceback) Tj
+T*
+(                traceback.print_exc\(\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            # JSON 폴백 모드) Tj
+T*
+(            folder_id = str\(len\(self._folders\) + 1\)) Tj
+T*
+(            folder_data = {) Tj
+T*
+(                'folder_id': folder_id,) Tj
+T*
+(                'p_folder_id': None,) Tj
+T*
+(                'title': default_folder_title,) Tj
+T*
+(                'user_name': username,) Tj
+T*
+(                'email': email,) Tj
+T*
+(                'password': password,) Tj
+T*
+(                'created_at': datetime.now\(\).isoformat\(\)) Tj
+T*
+(            }) Tj
+T*
+(            self._folders[folder_id] = folder_data) Tj
+T*
+(            self.save_data\(\)) Tj
+T*
+(            return folder_data) Tj
+T*
+(    ) Tj
+T*
+(    # === Folder 관련 메서드 ===) Tj
+T*
+(    ) Tj
+T*
+(    def get_folder\(self, folder_id\):) Tj
+T*
+(        """폴더 조회""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Folder'\).select\('*'\).eq\('folder_id', folder_id\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"폴더 조회 오류: {e}"\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            return self._folders.get\(str\(folder_id\)\)) Tj
+T*
+(    ) Tj
+T*
+(    def create_folder\(self, p_folder_id, title, user_name, email, password\):) Tj
+T*
+(        """폴더 생성""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Folder'\).insert\({) Tj
+T*
+(                    'p_folder_id': p_folder_id,) Tj
+T*
+(                    'title': title,) Tj
+T*
+(                    'user_name': user_name,) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 2658 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                    'email': email,) Tj
+T*
+(                    'password': password) Tj
+T*
+(                }\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"폴더 생성 오류: {e}"\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            folder_id = str\(len\(self._folders\) + 1\)) Tj
+T*
+(            folder_data = {) Tj
+T*
+(                'folder_id': folder_id,) Tj
+T*
+(                'p_folder_id': p_folder_id,) Tj
+T*
+(                'title': title,) Tj
+T*
+(                'user_name': user_name,) Tj
+T*
+(                'email': email,) Tj
+T*
+(                'password': password,) Tj
+T*
+(                'created_at': datetime.now\(\).isoformat\(\)) Tj
+T*
+(            }) Tj
+T*
+(            self._folders[folder_id] = folder_data) Tj
+T*
+(            self.save_data\(\)) Tj
+T*
+(            return folder_data) Tj
+T*
+(    ) Tj
+T*
+(    def update_folder\(self, folder_id, **kwargs\):) Tj
+T*
+(        """폴더 업데이트""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Folder'\).update\(kwargs\).eq\('folder_id', folder_id\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"폴더 업데이트 오류: {e}"\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            folder_id_str = str\(folder_id\)) Tj
+T*
+(            if folder_id_str in self._folders:) Tj
+T*
+(                self._folders[folder_id_str].update\(kwargs\)) Tj
+T*
+(                self.save_data\(\)) Tj
+T*
+(                return self._folders[folder_id_str]) Tj
+T*
+(            return None) Tj
+T*
+(    ) Tj
+T*
+(    def delete_folder\(self, folder_id\):) Tj
+T*
+(        """폴더 삭제""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Folder'\).delete\(\).eq\('folder_id', folder_id\).execute\(\)) Tj
+T*
+(                return True) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"폴더 삭제 오류: {e}"\)) Tj
+T*
+(                return False) Tj
+T*
+(        else:) Tj
+T*
+(            folder_id_str = str\(folder_id\)) Tj
+T*
+(            if folder_id_str in self._folders:) Tj
+T*
+(                del self._folders[folder_id_str]) Tj
+T*
+(                self.save_data\(\)) Tj
+T*
+(                return True) Tj
+T*
+(            return False) Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+10 0 obj
+<< /Length 2980 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(    ) Tj
+T*
+(    # === File 관련 메서드 ===) Tj
+T*
+(    ) Tj
+T*
+(    def get_file\(self, file_id\):) Tj
+T*
+(        """파일 조회""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('File'\).select\('*'\).eq\('file_id', file_id\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"파일 조회 오류: {e}"\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            return self._files.get\(str\(file_id\)\)) Tj
+T*
+(    ) Tj
+T*
+(    def get_files_by_folder\(self, folder_id=None\):) Tj
+T*
+(        """파일 목록 조회 \(단일 사용자 프로젝트 - folder_id는 선택사항\)""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                if folder_id is None:) Tj
+T*
+(                    # folder_id가 None이면 모든 파일 조회) Tj
+T*
+(                    result = self.supabase.table\('File'\).select\('*'\).order\('created_at', desc=True\).execute\(\)) Tj
+T*
+(                else:) Tj
+T*
+(                    result = self.supabase.table\('File'\).select\('*'\).eq\('folder_id', folder_id\).order\('created_at', desc=True\).execute\(\)) Tj
+T*
+(                return result.data if result.data else []) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"파일 목록 조회 오류: {e}"\)) Tj
+T*
+(                return []) Tj
+T*
+(        else:) Tj
+T*
+(            files = []) Tj
+T*
+(            for file_id, file_data in self._files.items\(\):) Tj
+T*
+(                if folder_id is None or file_data.get\('folder_id'\) == folder_id:) Tj
+T*
+(                    files.append\(file_data\)) Tj
+T*
+(            return files) Tj
+T*
+(    ) Tj
+T*
+(    def get_all_files\(self\):) Tj
+T*
+(        """모든 파일 조회 \(단일 사용자 프로젝트\)""") Tj
+T*
+(        return self.get_files_by_folder\(folder_id=None\)) Tj
+T*
+(    ) Tj
+T*
+(    def create_file\(self, folder_id=None, title=None, file_path=None, convert_file_path=None, summary_file_path=None\):) Tj
+T*
+(        """파일 생성 \(단일 사용자 프로젝트 - folder_id는 선택사항\)""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                file_data = {) Tj
+T*
+(                    'title': title) Tj
+T*
+(                }) Tj
+T*
+(                if folder_id is not None:) Tj
+T*
+(                    file_data['folder_id'] = folder_id) Tj
+T*
+(                if file_path:) Tj
+T*
+(                    file_data['file_path'] = file_path) Tj
+T*
+(                if convert_file_path:) Tj
+T*
+(                    file_data['convert_file_path'] = convert_file_path) Tj
+T*
+(                if summary_file_path:) Tj
+T*
+(                    file_data['summary_file_path'] = summary_file_path) Tj
+T*
+(                ) Tj
+T*
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 10 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+12 0 obj
+<< /Length 2681 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                result = self.supabase.table\('File'\).insert\(file_data\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"파일 생성 오류: {e}"\)) Tj
+T*
+(                import traceback) Tj
+T*
+(                traceback.print_exc\(\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            file_id = str\(len\(self._files\) + 1\)) Tj
+T*
+(            file_data = {) Tj
+T*
+(                'file_id': file_id,) Tj
+T*
+(                'folder_id': folder_id,) Tj
+T*
+(                'title': title,) Tj
+T*
+(                'file_path': file_path,) Tj
+T*
+(                'convert_file_path': convert_file_path,) Tj
+T*
+(                'summary_file_path': summary_file_path,) Tj
+T*
+(                'created_at': datetime.now\(\).isoformat\(\)) Tj
+T*
+(            }) Tj
+T*
+(            self._files[file_id] = file_data) Tj
+T*
+(            self.save_data\(\)) Tj
+T*
+(            return file_data) Tj
+T*
+(    ) Tj
+T*
+(    def update_file\(self, file_id, **kwargs\):) Tj
+T*
+(        """파일 업데이트""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('File'\).update\(kwargs\).eq\('file_id', file_id\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"파일 업데이트 오류: {e}"\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            file_id_str = str\(file_id\)) Tj
+T*
+(            if file_id_str in self._files:) Tj
+T*
+(                self._files[file_id_str].update\(kwargs\)) Tj
+T*
+(                self.save_data\(\)) Tj
+T*
+(                return self._files[file_id_str]) Tj
+T*
+(            return None) Tj
+T*
+(    ) Tj
+T*
+(    def delete_file\(self, file_id\):) Tj
+T*
+(        """파일 삭제""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('File'\).delete\(\).eq\('file_id', file_id\).execute\(\)) Tj
+T*
+(                return True) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"파일 삭제 오류: {e}"\)) Tj
+T*
+(                return False) Tj
+T*
+(        else:) Tj
+T*
+(            file_id_str = str\(file_id\)) Tj
+T*
+(            if file_id_str in self._files:) Tj
+T*
+(                del self._files[file_id_str]) Tj
+T*
+(                self.save_data\(\)) Tj
+T*
+(                return True) Tj
+T*
+(            return False) Tj
+T*
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 12 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+14 0 obj
+<< /Length 2783 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(    ) Tj
+T*
+(    # === Quiz 관련 메서드 ===) Tj
+T*
+(    ) Tj
+T*
+(    def get_quiz\(self, quiz_id\):) Tj
+T*
+(        """퀴즈 조회""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Quiz'\).select\('*'\).eq\('quiz_id', quiz_id\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"퀴즈 조회 오류: {e}"\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            return self._quizzes.get\(str\(quiz_id\)\)) Tj
+T*
+(    ) Tj
+T*
+(    def get_quizzes_by_file\(self, file_id\):) Tj
+T*
+(        """파일에 속한 퀴즈 목록 조회""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Quiz'\).select\('*'\).eq\('file_id', file_id\).execute\(\)) Tj
+T*
+(                return result.data if result.data else []) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"퀴즈 목록 조회 오류: {e}"\)) Tj
+T*
+(                return []) Tj
+T*
+(        else:) Tj
+T*
+(            quizzes = []) Tj
+T*
+(            for quiz_id, quiz_data in self._quizzes.items\(\):) Tj
+T*
+(                if quiz_data.get\('file_id'\) == file_id:) Tj
+T*
+(                    quizzes.append\(quiz_data\)) Tj
+T*
+(            return quizzes) Tj
+T*
+(    ) Tj
+T*
+(    def create_quiz\(self, file_id, question, example=None, correct_answer=None, explanation=None, user_answer=None, correct_is=False\):) Tj
+T*
+(        """퀴즈 생성""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                quiz_data = {) Tj
+T*
+(                    'file_id': file_id,) Tj
+T*
+(                    'question': question,) Tj
+T*
+(                    'correct_is': correct_is) Tj
+T*
+(                }) Tj
+T*
+(                if example:) Tj
+T*
+(                    quiz_data['example'] = example) Tj
+T*
+(                if correct_answer:) Tj
+T*
+(                    quiz_data['correct_answer'] = correct_answer) Tj
+T*
+(                if explanation:) Tj
+T*
+(                    quiz_data['explanation'] = explanation) Tj
+T*
+(                if user_answer:) Tj
+T*
+(                    quiz_data['user_answer'] = user_answer) Tj
+T*
+(                ) Tj
+T*
+(                result = self.supabase.table\('Quiz'\).insert\(quiz_data\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"퀴즈 생성 오류: {e}"\)) Tj
+T*
+(                import traceback) Tj
+T*
+(                traceback.print_exc\(\)) Tj
+T*
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 14 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+16 0 obj
+<< /Length 2567 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            quiz_id = str\(len\(self._quizzes\) + 1\)) Tj
+T*
+(            quiz_data = {) Tj
+T*
+(                'quiz_id': quiz_id,) Tj
+T*
+(                'file_id': file_id,) Tj
+T*
+(                'question': question,) Tj
+T*
+(                'example': example,) Tj
+T*
+(                'correct_answer': correct_answer,) Tj
+T*
+(                'explanation': explanation,) Tj
+T*
+(                'user_answer': user_answer,) Tj
+T*
+(                'correct_is': correct_is,) Tj
+T*
+(                'created_at': datetime.now\(\).isoformat\(\)) Tj
+T*
+(            }) Tj
+T*
+(            self._quizzes[quiz_id] = quiz_data) Tj
+T*
+(            self.save_data\(\)) Tj
+T*
+(            return quiz_data) Tj
+T*
+(    ) Tj
+T*
+(    def update_quiz\(self, quiz_id, **kwargs\):) Tj
+T*
+(        """퀴즈 업데이트""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Quiz'\).update\(kwargs\).eq\('quiz_id', quiz_id\).execute\(\)) Tj
+T*
+(                return result.data[0] if result.data else None) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"퀴즈 업데이트 오류: {e}"\)) Tj
+T*
+(                return None) Tj
+T*
+(        else:) Tj
+T*
+(            quiz_id_str = str\(quiz_id\)) Tj
+T*
+(            if quiz_id_str in self._quizzes:) Tj
+T*
+(                self._quizzes[quiz_id_str].update\(kwargs\)) Tj
+T*
+(                self.save_data\(\)) Tj
+T*
+(                return self._quizzes[quiz_id_str]) Tj
+T*
+(            return None) Tj
+T*
+(    ) Tj
+T*
+(    def delete_quiz\(self, quiz_id\):) Tj
+T*
+(        """퀴즈 삭제""") Tj
+T*
+(        if self.use_supabase:) Tj
+T*
+(            try:) Tj
+T*
+(                result = self.supabase.table\('Quiz'\).delete\(\).eq\('quiz_id', quiz_id\).execute\(\)) Tj
+T*
+(                return True) Tj
+T*
+(            except Exception as e:) Tj
+T*
+(                print\(f"퀴즈 삭제 오류: {e}"\)) Tj
+T*
+(                return False) Tj
+T*
+(        else:) Tj
+T*
+(            quiz_id_str = str\(quiz_id\)) Tj
+T*
+(            if quiz_id_str in self._quizzes:) Tj
+T*
+(                del self._quizzes[quiz_id_str]) Tj
+T*
+(                self.save_data\(\)) Tj
+T*
+(                return True) Tj
+T*
+(            return False) Tj
+T*
+(    ) Tj
+T*
+(    # === 호환성을 위한 메서드 \(기존 코드와의 호환\) ===) Tj
+T*
+(    ) Tj
+T*
+(    def get_user\(self, email\):) Tj
+T*
+ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 16 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+18 0 obj
+<< /Length 2421 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data_supabase.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        """사용자 조회 \(호환성 - Folder 테이블에서 첫 번째 폴더 반환\)""") Tj
+T*
+(        folders = self.get_user_folders\(email\)) Tj
+T*
+(        return folders[0] if folders else None) Tj
+T*
+(    ) Tj
+T*
+(    def create_user\(self, username, email, password\):) Tj
+T*
+(        """사용자 생성 \(호환성 - 기본 폴더와 함께 생성\)""") Tj
+T*
+(        return self.create_user_with_default_folder\(username, email, password\)) Tj
+T*
+(    ) Tj
+T*
+(    def get_folders\(self, user_email\):) Tj
+T*
+(        """사용자의 폴더 목록 조회 \(호환성\)""") Tj
+T*
+(        folders = self.get_user_folders\(user_email\)) Tj
+T*
+(        return [f['title'] for f in folders] if folders else []) Tj
+T*
+(    ) Tj
+T*
+(    def create_folder\(self, user_email, folder_name\):) Tj
+T*
+(        """폴더 생성 \(호환성 - 기존 사용자 정보 필요\)""") Tj
+T*
+(        # 기존 사용자의 폴더를 찾아서 user_name과 password 가져오기) Tj
+T*
+(        user_folders = self.get_user_folders\(user_email\)) Tj
+T*
+(        if not user_folders:) Tj
+T*
+(            return False) Tj
+T*
+(        ) Tj
+T*
+(        first_folder = user_folders[0]) Tj
+T*
+(        return self.create_folder\() Tj
+T*
+(            p_folder_id=None,) Tj
+T*
+(            title=folder_name,) Tj
+T*
+(            user_name=first_folder.get\('user_name', ''\),) Tj
+T*
+(            email=user_email,) Tj
+T*
+(            password=first_folder.get\('password', ''\)) Tj
+T*
+(        \) is not None) Tj
+T*
+(    ) Tj
+T*
+(    def update_folder_name\(self, user_email, old_name, new_name\):) Tj
+T*
+(        """폴더 이름 변경 \(호환성\)""") Tj
+T*
+(        folders = self.get_user_folders\(user_email\)) Tj
+T*
+(        for folder in folders:) Tj
+T*
+(            if folder.get\('title'\) == old_name:) Tj
+T*
+(                return self.update_folder\(folder['folder_id'], title=new_name\) is not None) Tj
+T*
+(        return False) Tj
+T*
+(    ) Tj
+T*
+(    def delete_folder_by_name\(self, user_email, folder_name\):) Tj
+T*
+(        """폴더 삭제 \(호환성\)""") Tj
+T*
+(        folders = self.get_user_folders\(user_email\)) Tj
+T*
+(        for folder in folders:) Tj
+T*
+(            if folder.get\('title'\) == folder_name:) Tj
+T*
+(                return self.delete_folder\(folder['folder_id']\)) Tj
+T*
+(        return False) Tj
+T*
+ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 20 0 R /MediaBox [0 0 612 792] /Contents 18 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+20 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R] /Count 9 >>
+endobj
+21 0 obj
+<< /Type /Catalog /Pages 20 0 R >>
+endobj
+xref
+0 22
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002763 00000 n 
+0000002890 00000 n 
+0000006017 00000 n 
+0000006144 00000 n 
+0000008832 00000 n 
+0000008959 00000 n 
+0000011669 00000 n 
+0000011796 00000 n 
+0000014829 00000 n 
+0000014958 00000 n 
+0000017692 00000 n 
+0000017821 00000 n 
+0000020657 00000 n 
+0000020786 00000 n 
+0000023406 00000 n 
+0000023535 00000 n 
+0000026009 00000 n 
+0000026138 00000 n 
+0000026249 00000 n 
+trailer
+<< /Size 22 /Root 21 0 R >>
+startxref
+26300
+%%EOF

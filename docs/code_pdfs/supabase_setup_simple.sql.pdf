@@ -1,0 +1,125 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2082 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(supabase_setup_simple.sql) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: supabase_setup_simple.sql) Tj
+T*
+(-- Supabase 테이블 생성 SQL 스크립트 \(단일 사용자 프로젝트용\)) Tj
+T*
+(-- File과 Quiz 테이블만 사용) Tj
+T*
+(-- Supabase 대시보드의 SQL Editor에서 실행하세요) Tj
+T*
+() Tj
+T*
+(-- 1. File 테이블 생성 \(folder_id는 NULL 허용\)) Tj
+T*
+(CREATE TABLE IF NOT EXISTS "File" \() Tj
+T*
+(    file_id BIGSERIAL PRIMARY KEY,) Tj
+T*
+(    folder_id BIGINT,  -- NULL 허용 \(단일 사용자 프로젝트\)) Tj
+T*
+(    title VARCHAR\(255\) NOT NULL,) Tj
+T*
+(    file_path VARCHAR\(500\),) Tj
+T*
+(    convert_file_path VARCHAR\(500\),) Tj
+T*
+(    summary_file_path VARCHAR\(500\),) Tj
+T*
+(    keywords TEXT,) Tj
+T*
+(    summary TEXT,) Tj
+T*
+(    created_at TIMESTAMPTZ DEFAULT NOW\(\)) Tj
+T*
+(\);) Tj
+T*
+() Tj
+T*
+(-- 2. Quiz 테이블 생성) Tj
+T*
+(CREATE TABLE IF NOT EXISTS "Quiz" \() Tj
+T*
+(    quiz_id BIGSERIAL PRIMARY KEY,) Tj
+T*
+(    file_id BIGINT NOT NULL REFERENCES "File"\(file_id\) ON DELETE CASCADE,) Tj
+T*
+(    question VARCHAR\(1000\) NOT NULL,) Tj
+T*
+(    example VARCHAR\(1000\),) Tj
+T*
+(    correct_answer VARCHAR\(500\) NOT NULL,) Tj
+T*
+(    explanation VARCHAR\(1000\),) Tj
+T*
+(    user_answer VARCHAR\(500\),) Tj
+T*
+(    correct_is BOOLEAN DEFAULT FALSE,) Tj
+T*
+(    created_at TIMESTAMPTZ DEFAULT NOW\(\)) Tj
+T*
+(\);) Tj
+T*
+() Tj
+T*
+(-- 인덱스 생성 \(성능 향상\)) Tj
+T*
+(CREATE INDEX IF NOT EXISTS idx_file_folder_id ON "File"\(folder_id\);) Tj
+T*
+(CREATE INDEX IF NOT EXISTS idx_quiz_file_id ON "Quiz"\(file_id\);) Tj
+T*
+() Tj
+T*
+(-- RLS \(Row Level Security\) 정책 설정) Tj
+T*
+(ALTER TABLE "File" ENABLE ROW LEVEL SECURITY;) Tj
+T*
+(ALTER TABLE "Quiz" ENABLE ROW LEVEL SECURITY;) Tj
+T*
+() Tj
+T*
+(-- 모든 사용자가 접근 가능하도록 정책 생성 \(개발용\)) Tj
+T*
+(CREATE POLICY "Allow all operations on File" ON "File" FOR ALL USING \(true\) WITH CHECK \(true\);) Tj
+T*
+(CREATE POLICY "Allow all operations on Quiz" ON "Quiz" FOR ALL USING \(true\) WITH CHECK \(true\);) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 4 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+5 0 obj
+<< /Type /Catalog /Pages 4 0 R >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002211 00000 n 
+0000002337 00000 n 
+0000002394 00000 n 
+trailer
+<< /Size 6 /Root 5 0 R >>
+startxref
+2443
+%%EOF

@@ -1,0 +1,181 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2231 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: Server/server_data.py) Tj
+T*
+(# server_data.py) Tj
+T*
+(# 서버 데이터 관리 모듈) Tj
+T*
+() Tj
+T*
+(import os) Tj
+T*
+(import json) Tj
+T*
+(import sys) Tj
+T*
+(sys.path.append\(os.path.dirname\(os.path.dirname\(os.path.abspath\(__file__\)\)\)\)) Tj
+T*
+(from env_utils import DATA_DIR) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(class ServerDataManager:) Tj
+T*
+(    """서버 데이터 관리 클래스""") Tj
+T*
+(    ) Tj
+T*
+(    def __init__\(self\):) Tj
+T*
+(        self.users_file = os.path.join\(DATA_DIR, "users.json"\)) Tj
+T*
+(        self.folders_file = os.path.join\(DATA_DIR, "folders.json"\)) Tj
+T*
+(        self.files_file = os.path.join\(DATA_DIR, "files.json"\)) Tj
+T*
+(        ) Tj
+T*
+(        # 디렉토리 생성) Tj
+T*
+(        self.ensure_directories\(\)) Tj
+T*
+(        ) Tj
+T*
+(        # 데이터 로드) Tj
+T*
+(        self.load_data\(\)) Tj
+T*
+(    ) Tj
+T*
+(    def ensure_directories\(self\):) Tj
+T*
+(        """필요한 디렉토리 생성""") Tj
+T*
+(        os.makedirs\(DATA_DIR, exist_ok=True\)) Tj
+T*
+(    ) Tj
+T*
+(    def load_data\(self\):) Tj
+T*
+(        """데이터 파일 로드""") Tj
+T*
+(        # 사용자 데이터) Tj
+T*
+(        if os.path.exists\(self.users_file\):) Tj
+T*
+(            with open\(self.users_file, 'r', encoding='utf-8'\) as f:) Tj
+T*
+(                self.users = json.load\(f\)) Tj
+T*
+(        else:) Tj
+T*
+(            self.users = {}) Tj
+T*
+(        ) Tj
+T*
+(        # 폴더 데이터) Tj
+T*
+(        if os.path.exists\(self.folders_file\):) Tj
+T*
+(            with open\(self.folders_file, 'r', encoding='utf-8'\) as f:) Tj
+T*
+(                self.folders = json.load\(f\)) Tj
+T*
+(        else:) Tj
+T*
+(            self.folders = {}) Tj
+T*
+(        ) Tj
+T*
+(        # 파일 데이터) Tj
+T*
+(        if os.path.exists\(self.files_file\):) Tj
+T*
+(            with open\(self.files_file, 'r', encoding='utf-8'\) as f:) Tj
+T*
+(                self.files = json.load\(f\)) Tj
+T*
+(        else:) Tj
+T*
+(            self.files = {}) Tj
+T*
+(    ) Tj
+T*
+(    def save_data\(self\):) Tj
+T*
+(        """데이터 파일 저장""") Tj
+T*
+(        with open\(self.users_file, 'w', encoding='utf-8'\) as f:) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 471 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_data.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(            json.dump\(self.users, f, ensure_ascii=False, indent=2\)) Tj
+T*
+(        with open\(self.folders_file, 'w', encoding='utf-8'\) as f:) Tj
+T*
+(            json.dump\(self.folders, f, ensure_ascii=False, indent=2\)) Tj
+T*
+(        with open\(self.files_file, 'w', encoding='utf-8'\) as f:) Tj
+T*
+(            json.dump\(self.files, f, ensure_ascii=False, indent=2\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 6 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R] /Count 2 >>
+endobj
+7 0 obj
+<< /Type /Catalog /Pages 6 0 R >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002360 00000 n 
+0000002486 00000 n 
+0000003008 00000 n 
+0000003134 00000 n 
+0000003197 00000 n 
+trailer
+<< /Size 8 /Root 7 0 R >>
+startxref
+3246
+%%EOF

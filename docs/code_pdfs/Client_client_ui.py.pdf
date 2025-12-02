@@ -1,0 +1,859 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2258 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_ui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: Client/client_ui.py) Tj
+T*
+(# client_ui.py) Tj
+T*
+(# 클라이언트 UI 구성 모듈) Tj
+T*
+() Tj
+T*
+(import sys) Tj
+T*
+(import os) Tj
+T*
+(sys.path.append\(os.path.dirname\(os.path.dirname\(os.path.abspath\(__file__\)\)\)\)) Tj
+T*
+(from tkinter import *) Tj
+T*
+(from tkinter import ttk, scrolledtext) Tj
+T*
+(from tkinter.font import Font) Tj
+T*
+(from env_utils import DEFAULT_HOST, DEFAULT_PORT) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(class ClientUI:) Tj
+T*
+(    """클라이언트 UI 구성 클래스""") Tj
+T*
+(    ) Tj
+T*
+(    def __init__\(self, root\):) Tj
+T*
+(        self.root = root) Tj
+T*
+(        self.root.title\("AI 학습 지원 도구"\)) Tj
+T*
+(        self.root.geometry\("1400x820"\)) Tj
+T*
+(        self.root.minsize\(1300, 780\)) Tj
+T*
+(        self.root.configure\(bg='#f5f5f5'\)) Tj
+T*
+(        ) Tj
+T*
+(        # 폰트 설정) Tj
+T*
+(        self.title_font = Font\(family="맑은 고딕", size=18, weight="bold"\)) Tj
+T*
+(        self.heading_font = Font\(family="맑은 고딕", size=12, weight="bold"\)) Tj
+T*
+(        self.normal_font = Font\(family="맑은 고딕", size=10\)) Tj
+T*
+(        ) Tj
+T*
+(        # 로그인 상태) Tj
+T*
+(        self.is_logged_in = False) Tj
+T*
+(        self.current_user_email = None) Tj
+T*
+(        self.current_username = None) Tj
+T*
+(        ) Tj
+T*
+(        # UI 구성) Tj
+T*
+(        self.create_widgets\(\)) Tj
+T*
+(    ) Tj
+T*
+(    def create_widgets\(self\):) Tj
+T*
+(        """위젯 생성""") Tj
+T*
+(        # 메인 컨테이너) Tj
+T*
+(        main_container = Frame\(self.root, bg='#f5f5f5'\)) Tj
+T*
+(        main_container.pack\(fill=BOTH, expand=True\)) Tj
+T*
+(        ) Tj
+T*
+(        # 사이드바) Tj
+T*
+(        self.create_sidebar\(main_container\)) Tj
+T*
+(        ) Tj
+T*
+(        # 메인 콘텐츠 영역) Tj
+T*
+(        self.create_main_content\(main_container\)) Tj
+T*
+(    ) Tj
+T*
+(    def create_sidebar\(self, parent\):) Tj
+T*
+(        """사이드바 생성""") Tj
+T*
+(        sidebar = Frame\(parent, bg='#ffffff', width=300\)) Tj
+T*
+(        sidebar.pack\(side=LEFT, fill=Y, padx=0, pady=0\)) Tj
+T*
+(        sidebar.pack_propagate\(False\)) Tj
+T*
+(        ) Tj
+T*
+(        # 사이드바 헤더) Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 16 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 3642 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_ui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        header = Frame\(sidebar, bg='#333333', height=80\)) Tj
+T*
+(        header.pack\(fill=X\)) Tj
+T*
+(        Label\(header, text="🚀 AI 학습 지원 도구", font=self.title_font,) Tj
+T*
+(              bg='#333333', fg='white'\).pack\(pady=20\)) Tj
+T*
+(        ) Tj
+T*
+(        # 서버 연결 설정 \(자동 연결, UI는 읽기 전용\)) Tj
+T*
+(        server_frame = LabelFrame\(sidebar, text="🔌 서버 연결", font=self.heading_font,) Tj
+T*
+(                                  bg='#ffffff', fg='#333', padx=15, pady=10\)) Tj
+T*
+(        server_frame.pack\(fill=X, padx=10, pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        # 서버 정보 표시 \(읽기 전용\)) Tj
+T*
+(        Label\(server_frame, text="서버 주소:", font=self.normal_font, bg='#ffffff'\).pack\(anchor=W\)) Tj
+T*
+(        self.server_host_label = Label\(server_frame, text=DEFAULT_HOST,) Tj
+T*
+(                                       font=self.normal_font, bg='#ffffff', fg='#333'\)) Tj
+T*
+(        self.server_host_label.pack\(anchor=W, pady=2\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(server_frame, text="포트:", font=self.normal_font, bg='#ffffff'\).pack\(anchor=W, pady=\(5,0\)\)) Tj
+T*
+(        self.server_port_label = Label\(server_frame, text=str\(DEFAULT_PORT\),) Tj
+T*
+(                                        font=self.normal_font, bg='#ffffff', fg='#333'\)) Tj
+T*
+(        self.server_port_label.pack\(anchor=W, pady=2\)) Tj
+T*
+(        ) Tj
+T*
+(        self.server_status_label = Label\(server_frame, text="연결 상태: 연결 중...", ) Tj
+T*
+(                                         font=self.normal_font, bg='#ffffff', fg='#666'\)) Tj
+T*
+(        self.server_status_label.pack\(pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        # AI 액션 메뉴) Tj
+T*
+(        action_frame = LabelFrame\(sidebar, text="🎯 AI 액션 메뉴", font=self.heading_font,) Tj
+T*
+(                                  bg='#ffffff', fg='#333', padx=15, pady=10\)) Tj
+T*
+(        action_frame.pack\(fill=X, padx=10, pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        self.convert_btn = Button\(action_frame, text="🎙️ 녹음 파일 변환",) Tj
+T*
+(               bg='#333333', fg='white', font=self.normal_font, relief=FLAT, pady=10\)) Tj
+T*
+(        self.convert_btn.pack\(fill=X\)) Tj
+T*
+(        ) Tj
+T*
+(        # 폴더 관리) Tj
+T*
+(        folder_frame = LabelFrame\(sidebar, text="📁 폴더 관리", font=self.heading_font,) Tj
+T*
+(                                   bg='#ffffff', fg='#333', padx=15, pady=10\)) Tj
+T*
+(        folder_frame.pack\(fill=X, padx=10, pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_btn = Button\(folder_frame, text="📁 폴더 관리",) Tj
+T*
+(               bg='#333333', fg='white', font=self.normal_font, relief=FLAT, pady=10\)) Tj
+T*
+(        self.folder_btn.pack\(fill=X\)) Tj
+T*
+(        ) Tj
+T*
+(        # 프로젝트 기록) Tj
+T*
+(        history_frame = LabelFrame\(sidebar, text="📚 프로젝트 기록", font=self.heading_font,) Tj
+T*
+(                                    bg='#ffffff', fg='#333', padx=15, pady=10\)) Tj
+T*
+(        history_frame.pack\(fill=BOTH, expand=True, padx=10, pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        # 트리뷰로 프로젝트 표시) Tj
+T*
+(        self.project_tree = ttk.Treeview\(history_frame, show='tree'\)) Tj
+T*
+(        self.project_tree.pack\(fill=BOTH, expand=True\)) Tj
+T*
+(        # 루트 노드 \(변환된 파일\)) Tj
+T*
+(        self.project_root = self.project_tree.insert\('', 'end', text='변환된 파일', open=True\)) Tj
+T*
+(    ) Tj
+T*
+(    def create_main_content\(self, parent\):) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 16 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 3379 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_ui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        """메인 콘텐츠 영역 생성""") Tj
+T*
+(        main_content = Frame\(parent, bg='#ffffff'\)) Tj
+T*
+(        main_content.pack\(side=LEFT, fill=BOTH, expand=True, padx=30, pady=30\)) Tj
+T*
+(        ) Tj
+T*
+(        # 문서 뷰어 컨테이너) Tj
+T*
+(        viewer_frame = Frame\(main_content, bg='#ffffff'\)) Tj
+T*
+(        viewer_frame.pack\(fill=BOTH, expand=True\)) Tj
+T*
+(        ) Tj
+T*
+(        # 문서 헤더) Tj
+T*
+(        self.document_header = Frame\(viewer_frame, bg='#ffffff'\)) Tj
+T*
+(        self.document_header.pack\(fill=X, pady=\(0, 20\)\)) Tj
+T*
+(        ) Tj
+T*
+(        self.document_title = Label\(self.document_header, text="AI 학습 지원 도구",) Tj
+T*
+(                                    font=self.title_font, bg='#ffffff', fg='#333'\)) Tj
+T*
+(        self.document_title.pack\(anchor=W\)) Tj
+T*
+(        ) Tj
+T*
+(        # 인덱스 버튼) Tj
+T*
+(        self.index_frame = Frame\(viewer_frame, bg='#ffffff'\)) Tj
+T*
+(        self.index_frame.pack\(fill=X, pady=\(0, 20\)\)) Tj
+T*
+(        self.index_frame.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        self.summary_btn = Button\(self.index_frame, text="📝 요약 정리",) Tj
+T*
+(                                  bg='#333333', fg='white', font=self.normal_font, relief=FLAT, padx=20, pady=10\)) Tj
+T*
+(        self.summary_btn.pack\(side=LEFT, padx=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.quiz_btn = Button\(self.index_frame, text="❓ 퀴즈",) Tj
+T*
+(                                bg='#f0f0f0', fg='#666', font=self.normal_font, relief=FLAT, padx=20, pady=10\)) Tj
+T*
+(        self.quiz_btn.pack\(side=LEFT, padx=5\)) Tj
+T*
+(        ) Tj
+T*
+(        # 콘텐츠 영역 \(스크롤 가능\)) Tj
+T*
+(        self.content_canvas = Canvas\(viewer_frame, bg='#ffffff', highlightthickness=0\)) Tj
+T*
+(        scrollbar = Scrollbar\(viewer_frame, orient="vertical", command=self.content_canvas.yview\)) Tj
+T*
+(        self.content_frame = Frame\(self.content_canvas, bg='#ffffff'\)) Tj
+T*
+(        ) Tj
+T*
+(        self.content_canvas.pack\(side=LEFT, fill=BOTH, expand=True\)) Tj
+T*
+(        scrollbar.pack\(side=RIGHT, fill=Y\)) Tj
+T*
+(        self.content_canvas.configure\(yscrollcommand=scrollbar.set\)) Tj
+T*
+(        ) Tj
+T*
+(        # Canvas의 너비에 맞춰 content_frame이 확장되도록 설정) Tj
+T*
+(        self.content_window = self.content_canvas.create_window\(\(0, 0\), window=self.content_frame, anchor="nw"\)) Tj
+T*
+(        ) Tj
+T*
+(        def _update_content_canvas\(event\):) Tj
+T*
+(            # Canvas 너비에 맞춰 content_frame 너비 조정) Tj
+T*
+(            canvas_width = event.width) Tj
+T*
+(            self.content_canvas.itemconfig\(self.content_window, width=canvas_width\)) Tj
+T*
+(            self.content_canvas.configure\(scrollregion=self.content_canvas.bbox\("all"\)\)) Tj
+T*
+(        ) Tj
+T*
+(        self.content_canvas.bind\("<Configure>", _update_content_canvas\)) Tj
+T*
+(        self.content_frame.bind\("<Configure>", lambda e: self.content_canvas.configure\(scrollregion=self.content_canvas.bbox\("all"\)\)\)) Tj
+T*
+(        ) Tj
+T*
+(        # 액션 폼들) Tj
+T*
+(        self.create_convert_form\(\)) Tj
+T*
+(        self.create_folder_form\(\)) Tj
+T*
+(        self.create_summary_section\(\)) Tj
+T*
+(        self.create_quiz_section\(\)) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 16 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Length 3641 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_ui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(    ) Tj
+T*
+(    def create_convert_form\(self\):) Tj
+T*
+(        """녹음 파일 변환 폼""") Tj
+T*
+(        self.convert_frame = LabelFrame\(self.content_frame, text="🎙️ 녹음 파일 변환",) Tj
+T*
+(                                        font=self.heading_font, bg='#ffffff', padx=25, pady=25\)) Tj
+T*
+(        self.convert_frame.pack\(fill=X, pady=10\)) Tj
+T*
+(        self.convert_frame.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(self.convert_frame, text="로컬 파일을 서버로 전송하여 텍스트로 변환하고 새로운 기록으로 저장합니다.",) Tj
+T*
+(              font=self.normal_font, bg='#ffffff', fg='#666', wraplength=800\).pack\(anchor=W, pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        file_frame = Frame\(self.convert_frame, bg='#ffffff'\)) Tj
+T*
+(        file_frame.pack\(fill=X, pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        self.audio_file_label = Label\(file_frame, text="선택된 파일: 없음",) Tj
+T*
+(                                       font=self.normal_font, bg='#ffffff', fg='#666'\)) Tj
+T*
+(        self.audio_file_label.pack\(anchor=W, pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.select_file_btn = Button\(file_frame, text="파일 선택",) Tj
+T*
+(               bg='#2196F3', fg='white', font=self.normal_font, relief=FLAT, padx=15, pady=5\)) Tj
+T*
+(        self.select_file_btn.pack\(side=LEFT, padx=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.convert_btn_main = Button\(self.convert_frame, text="📤 텍스트로 변환 및 문서 저장",) Tj
+T*
+(               bg='#333333', fg='white', font=self.normal_font, relief=FLAT, padx=20, pady=10\)) Tj
+T*
+(        self.convert_btn_main.pack\(pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        self.convert_result_label = Label\(self.convert_frame, text="", font=self.normal_font,) Tj
+T*
+(                                          bg='#ffffff', fg='green', wraplength=800, justify=LEFT\)) Tj
+T*
+(        self.convert_result_label.pack\(anchor=W, pady=10\)) Tj
+T*
+(    ) Tj
+T*
+(    def create_folder_form\(self\):) Tj
+T*
+(        """폴더 관리 폼""") Tj
+T*
+(        self.folder_frame = LabelFrame\(self.content_frame, text="📁 폴더 관리",) Tj
+T*
+(                                       font=self.heading_font, bg='#ffffff', padx=25, pady=25\)) Tj
+T*
+(        self.folder_frame.pack\(fill=X, pady=10\)) Tj
+T*
+(        self.folder_frame.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        # 탭 버튼) Tj
+T*
+(        tab_frame = Frame\(self.folder_frame, bg='#ffffff'\)) Tj
+T*
+(        tab_frame.pack\(fill=X, pady=\(0, 20\)\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_tab_add = Button\(tab_frame, text="➕ 폴더 추가",) Tj
+T*
+(                                      bg='#333333', fg='white', font=self.normal_font, relief=FLAT, padx=15, pady=8\)) Tj
+T*
+(        self.folder_tab_add.pack\(side=LEFT, padx=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_tab_update = Button\(tab_frame, text="✏️ 폴더 수정",) Tj
+T*
+(                                        bg='#f0f0f0', fg='#666', font=self.normal_font, relief=FLAT, padx=15, pady=8\)) Tj
+T*
+(        self.folder_tab_update.pack\(side=LEFT, padx=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_tab_delete = Button\(tab_frame, text="🗑️ 폴더 삭제",) Tj
+T*
+(                                        bg='#f0f0f0', fg='#666', font=self.normal_font, relief=FLAT, padx=15, pady=8\)) Tj
+T*
+(        self.folder_tab_delete.pack\(side=LEFT, padx=5\)) Tj
+T*
+(        ) Tj
+T*
+(        # 폴더 추가 섹션) Tj
+T*
+(        self.folder_add_section = Frame\(self.folder_frame, bg='#ffffff'\)) Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 16 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+10 0 obj
+<< /Length 3958 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_ui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        self.folder_add_section.pack\(fill=X, pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(self.folder_add_section, text="폴더 이름:", font=self.normal_font, bg='#ffffff'\).pack\(anchor=W, pady=5\)) Tj
+T*
+(        self.folder_name_add_entry = Entry\(self.folder_add_section, font=self.normal_font, width=50\)) Tj
+T*
+(        self.folder_name_add_entry.pack\(fill=X, pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_add_btn = Button\(self.folder_add_section, text="📤 폴더 추가",) Tj
+T*
+(               bg='#333333', fg='white', font=self.normal_font, relief=FLAT, padx=20, pady=8\)) Tj
+T*
+(        self.folder_add_btn.pack\(pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_add_result = Label\(self.folder_add_section, text="", font=self.normal_font,) Tj
+T*
+(                                       bg='#ffffff', fg='green', wraplength=800, justify=LEFT\)) Tj
+T*
+(        self.folder_add_result.pack\(anchor=W, pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        # 폴더 수정 섹션) Tj
+T*
+(        self.folder_update_section = Frame\(self.folder_frame, bg='#ffffff'\)) Tj
+T*
+(        self.folder_update_section.pack\(fill=X, pady=10\)) Tj
+T*
+(        self.folder_update_section.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(self.folder_update_section, text="기존 폴더 이름:", font=self.normal_font, bg='#ffffff'\).pack\(anchor=W, pady=5\)) Tj
+T*
+(        self.folder_name_old_entry = Entry\(self.folder_update_section, font=self.normal_font, width=50\)) Tj
+T*
+(        self.folder_name_old_entry.pack\(fill=X, pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(self.folder_update_section, text="새 폴더 이름:", font=self.normal_font, bg='#ffffff'\).pack\(anchor=W, pady=5\)) Tj
+T*
+(        self.folder_name_new_entry = Entry\(self.folder_update_section, font=self.normal_font, width=50\)) Tj
+T*
+(        self.folder_name_new_entry.pack\(fill=X, pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_update_btn = Button\(self.folder_update_section, text="📤 폴더 수정",) Tj
+T*
+(               bg='#333333', fg='white', font=self.normal_font, relief=FLAT, padx=20, pady=8\)) Tj
+T*
+(        self.folder_update_btn.pack\(pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_update_result = Label\(self.folder_update_section, text="", font=self.normal_font,) Tj
+T*
+(                                          bg='#ffffff', fg='green', wraplength=800, justify=LEFT\)) Tj
+T*
+(        self.folder_update_result.pack\(anchor=W, pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        # 폴더 삭제 섹션) Tj
+T*
+(        self.folder_delete_section = Frame\(self.folder_frame, bg='#ffffff'\)) Tj
+T*
+(        self.folder_delete_section.pack\(fill=X, pady=10\)) Tj
+T*
+(        self.folder_delete_section.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(self.folder_delete_section, text="폴더 이름:", font=self.normal_font, bg='#ffffff'\).pack\(anchor=W, pady=5\)) Tj
+T*
+(        self.folder_name_delete_entry = Entry\(self.folder_delete_section, font=self.normal_font, width=50\)) Tj
+T*
+(        self.folder_name_delete_entry.pack\(fill=X, pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_delete_btn = Button\(self.folder_delete_section, text="📤 폴더 삭제",) Tj
+T*
+(               bg='#f44336', fg='white', font=self.normal_font, relief=FLAT, padx=20, pady=8\)) Tj
+T*
+(        self.folder_delete_btn.pack\(pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        self.folder_delete_result = Label\(self.folder_delete_section, text="", font=self.normal_font,) Tj
+T*
+(                                          bg='#ffffff', fg='green', wraplength=800, justify=LEFT\)) Tj
+T*
+(        self.folder_delete_result.pack\(anchor=W, pady=5\)) Tj
+T*
+(    ) Tj
+T*
+(    def create_summary_section\(self\):) Tj
+T*
+(        """요약 정리 섹션""") Tj
+T*
+(        self.summary_frame = LabelFrame\(self.content_frame, text="🔑 주요 키워드 및 핵심 요약",) Tj
+T*
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 16 0 R /MediaBox [0 0 612 792] /Contents 10 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+12 0 obj
+<< /Length 3821 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_ui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(                                        font=self.heading_font, bg='#ffffff', padx=25, pady=25\)) Tj
+T*
+(        self.summary_frame.pack\(fill=BOTH, expand=True, pady=10\)) Tj
+T*
+(        self.summary_frame.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(self.summary_frame, text="키워드:", font=self.heading_font, bg='#ffffff'\).pack\(anchor=W, pady=5\)) Tj
+T*
+(        self.keyword_label = Label\(self.summary_frame, text="",) Tj
+T*
+(                                   font=self.normal_font, bg='#ffffff', fg='#555', justify=LEFT, anchor='w'\)) Tj
+T*
+(        self.keyword_label.pack\(anchor=W, pady=5, fill=X\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(self.summary_frame, text="요약:", font=self.heading_font, bg='#ffffff'\).pack\(anchor=W, pady=5\)) Tj
+T*
+(        self.summary_label = Label\(self.summary_frame, ) Tj
+T*
+(                                   text="",) Tj
+T*
+(                                   font=self.normal_font, bg='#ffffff', fg='#555', justify=LEFT, anchor='w'\)) Tj
+T*
+(        self.summary_label.pack\(anchor=W, pady=5, fill=X\)) Tj
+T*
+(        ) Tj
+T*
+(        ttk.Separator\(self.summary_frame, orient=HORIZONTAL\).pack\(fill=X, pady=20\)) Tj
+T*
+(        ) Tj
+T*
+(        Label\(self.summary_frame, text="📜 변환 및 원본 텍스트", font=self.heading_font, bg='#ffffff'\).pack\(anchor=W, pady=5\)) Tj
+T*
+(        self.conversion_text = scrolledtext.ScrolledText\(self.summary_frame, height=15, width=80,) Tj
+T*
+(                                                         font=self.normal_font, wrap=WORD, bg='#ffffff'\)) Tj
+T*
+(        self.conversion_text.pack\(fill=BOTH, expand=True, pady=5\)) Tj
+T*
+(        self.conversion_text.config\(state=DISABLED\)) Tj
+T*
+() Tj
+T*
+(        # 요약/키워드 텍스트가 프레임 폭에 맞게 보이도록 wraplength 동적 조정) Tj
+T*
+(        def _update_wrap\(event\):) Tj
+T*
+(            w = event.width - 50  # 좌우 여백 보정 \(padx 25 * 2\)) Tj
+T*
+(            if w > 200:) Tj
+T*
+(                self.keyword_label.config\(wraplength=w\)) Tj
+T*
+(                self.summary_label.config\(wraplength=w\)) Tj
+T*
+(        self.summary_frame.bind\("<Configure>", _update_wrap\)) Tj
+T*
+(    ) Tj
+T*
+(    def create_quiz_section\(self\):) Tj
+T*
+(        """퀴즈 섹션""") Tj
+T*
+(        self.quiz_frame = LabelFrame\(self.content_frame, text="❓ 예상 문제",) Tj
+T*
+(                                     font=self.heading_font, bg='#ffffff', padx=25, pady=25\)) Tj
+T*
+(        self.quiz_frame.pack\(fill=BOTH, expand=True, pady=10\)) Tj
+T*
+(        self.quiz_frame.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        # 퀴즈 항목들) Tj
+T*
+(        self.quiz_canvas = Canvas\(self.quiz_frame, bg='#ffffff', highlightthickness=0\)) Tj
+T*
+(        quiz_scrollbar = Scrollbar\(self.quiz_frame, orient="vertical", command=self.quiz_canvas.yview\)) Tj
+T*
+(        self.quiz_content = Frame\(self.quiz_canvas, bg='#ffffff'\)) Tj
+T*
+(        ) Tj
+T*
+(        self.quiz_canvas.pack\(side=LEFT, fill=BOTH, expand=True\)) Tj
+T*
+(        quiz_scrollbar.pack\(side=RIGHT, fill=Y\)) Tj
+T*
+(        self.quiz_canvas.configure\(yscrollcommand=quiz_scrollbar.set\)) Tj
+T*
+(        ) Tj
+T*
+(        # Canvas의 너비에 맞춰 quiz_content가 확장되도록 설정) Tj
+T*
+(        self.quiz_window = self.quiz_canvas.create_window\(\(0, 0\), window=self.quiz_content, anchor="nw"\)) Tj
+T*
+(        ) Tj
+T*
+(        def _update_quiz_canvas\(event\):) Tj
+T*
+(            # Canvas 너비에 맞춰 quiz_content 너비 조정) Tj
+T*
+(            canvas_width = event.width) Tj
+T*
+(            self.quiz_canvas.itemconfig\(self.quiz_window, width=canvas_width\)) Tj
+T*
+(            self.quiz_canvas.configure\(scrollregion=self.quiz_canvas.bbox\("all"\)\)) Tj
+T*
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 16 0 R /MediaBox [0 0 612 792] /Contents 12 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+14 0 obj
+<< /Length 1471 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Client/client_ui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        ) Tj
+T*
+(        self.quiz_canvas.bind\("<Configure>", _update_quiz_canvas\)) Tj
+T*
+(        self.quiz_content.bind\("<Configure>", lambda e: self.quiz_canvas.configure\(scrollregion=self.quiz_canvas.bbox\("all"\)\)\)) Tj
+T*
+(        ) Tj
+T*
+(        # 동적 퀴즈 위젯 리스트) Tj
+T*
+(        self.quiz_frames = []) Tj
+T*
+(        ) Tj
+T*
+(        # 다음 문제 생성 버튼) Tj
+T*
+(        self.add_quiz_btn = Button\(self.quiz_content, text="➕ 다음 문제 생성",) Tj
+T*
+(               bg='#2196F3', fg='white', font=self.heading_font, relief=FLAT, padx=30, pady=15\)) Tj
+T*
+(        self.add_quiz_btn.pack\(pady=10\)) Tj
+T*
+(        ) Tj
+T*
+(        # 채점 버튼 및 결과) Tj
+T*
+(        ttk.Separator\(self.quiz_content, orient=HORIZONTAL\).pack\(fill=X, pady=20\)) Tj
+T*
+(        ) Tj
+T*
+(        self.final_score_label = Label\(self.quiz_content, text="", font=self.heading_font,) Tj
+T*
+(                                       bg='#ffffff', fg='#333'\)) Tj
+T*
+(        self.final_score_label.pack\(pady=10\)) Tj
+T*
+(        self.final_score_label.pack_forget\(\)) Tj
+T*
+(        ) Tj
+T*
+(        self.score_btn = Button\(self.quiz_content, text="✅ 정답 확인 및 채점",) Tj
+T*
+(               bg='#333333', fg='white', font=self.heading_font, relief=FLAT, padx=30, pady=15\)) Tj
+T*
+(        self.score_btn.pack\(pady=20\)) Tj
+T*
+(    ) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 16 0 R /MediaBox [0 0 612 792] /Contents 14 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+16 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R] /Count 7 >>
+endobj
+17 0 obj
+<< /Type /Catalog /Pages 16 0 R >>
+endobj
+xref
+0 18
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002387 00000 n 
+0000002514 00000 n 
+0000006208 00000 n 
+0000006335 00000 n 
+0000009766 00000 n 
+0000009893 00000 n 
+0000013586 00000 n 
+0000013713 00000 n 
+0000017724 00000 n 
+0000017853 00000 n 
+0000021727 00000 n 
+0000021856 00000 n 
+0000023380 00000 n 
+0000023509 00000 n 
+0000023606 00000 n 
+trailer
+<< /Size 18 /Root 17 0 R >>
+startxref
+23657
+%%EOF

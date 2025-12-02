@@ -1,0 +1,403 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+2 0 obj
+<< /Length 2702 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_gui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(Path: Server/server_gui.py) Tj
+T*
+(# server_gui.py) Tj
+T*
+(# 서버 GUI \(기존 ai_learning_server_gui.py 리팩토링\)) Tj
+T*
+() Tj
+T*
+(import threading) Tj
+T*
+(import tkinter as tk) Tj
+T*
+(import sys) Tj
+T*
+(import os) Tj
+T*
+(sys.path.append\(os.path.dirname\(os.path.dirname\(os.path.abspath\(__file__\)\)\)\)) Tj
+T*
+(from tkinter import ttk, scrolledtext, messagebox) Tj
+T*
+() Tj
+T*
+(from Server.server_core import AILearningServer) Tj
+T*
+(from env_utils import DEFAULT_HOST, DEFAULT_PORT) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(class ServerGUI:) Tj
+T*
+(    def __init__\(self, root: tk.Tk\):) Tj
+T*
+(        self.root = root) Tj
+T*
+(        self.root.title\("AI 학습 지원 서버"\)) Tj
+T*
+(        self.root.geometry\("900x700"\)) Tj
+T*
+() Tj
+T*
+(        self.server: AILearningServer | None = None) Tj
+T*
+(        self.server_thread: threading.Thread | None = None) Tj
+T*
+(        self.connected_clients = {}  # 연결된 클라이언트 추적) Tj
+T*
+() Tj
+T*
+(        self._create_widgets\(\)) Tj
+T*
+() Tj
+T*
+(    def _create_widgets\(self\):) Tj
+T*
+(        top = ttk.LabelFrame\(self.root, text="서버 설정"\)) Tj
+T*
+(        top.pack\(fill="x", padx=10, pady=10\)) Tj
+T*
+() Tj
+T*
+(        ttk.Label\(top, text="호스트"\).grid\(row=0, column=0, padx=5, pady=5, sticky="w"\)) Tj
+T*
+(        self.host_entry = ttk.Entry\(top, width=18\)) Tj
+T*
+(        self.host_entry.insert\(0, DEFAULT_HOST\)) Tj
+T*
+(        self.host_entry.grid\(row=0, column=1, padx=5, pady=5\)) Tj
+T*
+() Tj
+T*
+(        ttk.Label\(top, text="포트"\).grid\(row=0, column=2, padx=5, pady=5, sticky="w"\)) Tj
+T*
+(        self.port_entry = ttk.Entry\(top, width=8\)) Tj
+T*
+(        self.port_entry.insert\(0, str\(DEFAULT_PORT\)\)) Tj
+T*
+(        self.port_entry.grid\(row=0, column=3, padx=5, pady=5\)) Tj
+T*
+() Tj
+T*
+(        self.start_btn = ttk.Button\(top, text="서버 시작", command=self.start_server\)) Tj
+T*
+(        self.start_btn.grid\(row=0, column=4, padx=5, pady=5\)) Tj
+T*
+() Tj
+T*
+(        self.stop_btn = ttk.Button\(top, text="서버 중지", command=self.stop_server, state="disabled"\)) Tj
+T*
+(        self.stop_btn.grid\(row=0, column=5, padx=5, pady=5\)) Tj
+T*
+() Tj
+T*
+(        self.status_label = ttk.Label\(top, text="상태: 중지됨", foreground="red"\)) Tj
+T*
+(        self.status_label.grid\(row=1, column=0, columnspan=6, padx=5, pady=5, sticky="w"\)) Tj
+T*
+() Tj
+T*
+(        # 로그 영역) Tj
+T*
+(        log_frame = ttk.LabelFrame\(self.root, text="서버 로그"\)) Tj
+T*
+(        log_frame.pack\(fill="both", expand=True, padx=10, pady=10\)) Tj
+T*
+() Tj
+T*
+(        self.log_text = scrolledtext.ScrolledText\() Tj
+T*
+ET
+endstream
+endobj
+3 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2642 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_gui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(            log_frame, height=20, width=80, state="disabled", font=\("Consolas", 9\)) Tj
+T*
+(        \)) Tj
+T*
+(        self.log_text.pack\(fill="both", expand=True, padx=5, pady=5\)) Tj
+T*
+() Tj
+T*
+(        # 클라이언트 연결 정보) Tj
+T*
+(        client_frame = ttk.LabelFrame\(self.root, text="연결된 클라이언트"\)) Tj
+T*
+(        client_frame.pack\(fill="x", padx=10, pady=\(0, 10\)\)) Tj
+T*
+(        ) Tj
+T*
+(        self.client_listbox = tk.Listbox\(client_frame, height=4, font=\("Consolas", 9\)\)) Tj
+T*
+(        self.client_listbox.pack\(fill="x", padx=5, pady=5\)) Tj
+T*
+(        ) Tj
+T*
+(        self.client_count_label = ttk.Label\(client_frame, text="접속 클라이언트: 0명"\)) Tj
+T*
+(        self.client_count_label.pack\(side="left", padx=5, pady=5\)) Tj
+T*
+() Tj
+T*
+(    # --- 서버 제어 ---) Tj
+T*
+() Tj
+T*
+(    def start_server\(self\):) Tj
+T*
+(        if self.server_thread and self.server_thread.is_alive\(\):) Tj
+T*
+(            messagebox.showinfo\("알림", "이미 서버가 실행 중입니다."\)) Tj
+T*
+(            return) Tj
+T*
+() Tj
+T*
+(        host = self.host_entry.get\(\).strip\(\) or DEFAULT_HOST) Tj
+T*
+(        try:) Tj
+T*
+(            port = int\(self.port_entry.get\(\).strip\(\) or DEFAULT_PORT\)) Tj
+T*
+(        except ValueError:) Tj
+T*
+(            messagebox.showerror\("오류", "포트는 숫자여야 합니다."\)) Tj
+T*
+(            return) Tj
+T*
+() Tj
+T*
+(        self.server = AILearningServer\(host=host, port=port, log_callback=self._log\)) Tj
+T*
+() Tj
+T*
+(        def run_server\(\):) Tj
+T*
+(            self._log\(f"[서버] 시작: {host}:{port}"\)) Tj
+T*
+(            self._set_status\(running=True, host=host, port=port\)) Tj
+T*
+(            try:) Tj
+T*
+(                self.server.start\(\)) Tj
+T*
+(            finally:) Tj
+T*
+(                self._set_status\(running=False\)) Tj
+T*
+(                self._log\("[서버] 중지됨"\)) Tj
+T*
+(                self._update_client_list\(\)) Tj
+T*
+() Tj
+T*
+(        self.server_thread = threading.Thread\(target=run_server, daemon=True\)) Tj
+T*
+(        self.server_thread.start\(\)) Tj
+T*
+() Tj
+T*
+(        self.start_btn.config\(state="disabled"\)) Tj
+T*
+(        self.stop_btn.config\(state="normal"\)) Tj
+T*
+() Tj
+T*
+(    def stop_server\(self\):) Tj
+T*
+(        if self.server:) Tj
+T*
+(            self.server.stop\(\)) Tj
+T*
+(        self.start_btn.config\(state="normal"\)) Tj
+T*
+(        self.stop_btn.config\(state="disabled"\)) Tj
+T*
+() Tj
+T*
+(    # --- UI 업데이트 ---) Tj
+T*
+() Tj
+T*
+(    def _log\(self, msg: str\):) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 2569 >>
+stream
+BT
+/F1 12 Tf
+72 760 Td
+(Server/server_gui.py) Tj
+T*
+/F1 9 Tf
+12 TL
+(        def append\(\):) Tj
+T*
+(            self.log_text.config\(state="normal"\)) Tj
+T*
+(            self.log_text.insert\("end", msg + "\\n"\)) Tj
+T*
+(            self.log_text.see\("end"\)) Tj
+T*
+(            self.log_text.config\(state="disabled"\)) Tj
+T*
+(            ) Tj
+T*
+(            # 클라이언트 연결/종료 메시지 파싱) Tj
+T*
+(            if "[연결] 클라이언트:" in msg:) Tj
+T*
+(                parts = msg.split\("클라이언트:"\)) Tj
+T*
+(                if len\(parts\) > 1:) Tj
+T*
+(                    client_id = parts[1].strip\(\)) Tj
+T*
+(                    self.connected_clients[client_id] = client_id) Tj
+T*
+(                    self._update_client_list\(\)) Tj
+T*
+(            elif "[종료] 클라이언트 연결 종료:" in msg:) Tj
+T*
+(                parts = msg.split\("클라이언트 연결 종료:"\)) Tj
+T*
+(                if len\(parts\) > 1:) Tj
+T*
+(                    client_id = parts[1].strip\(\)) Tj
+T*
+(                    if client_id in self.connected_clients:) Tj
+T*
+(                        del self.connected_clients[client_id]) Tj
+T*
+(                    self._update_client_list\(\)) Tj
+T*
+() Tj
+T*
+(        self.root.after\(0, append\)) Tj
+T*
+(    ) Tj
+T*
+(    def _update_client_list\(self\):) Tj
+T*
+(        """연결된 클라이언트 목록 업데이트""") Tj
+T*
+(        def update\(\):) Tj
+T*
+(            self.client_listbox.delete\(0, tk.END\)) Tj
+T*
+(            for client_id in self.connected_clients.values\(\):) Tj
+T*
+(                self.client_listbox.insert\(tk.END, client_id\)) Tj
+T*
+(            self.client_count_label.config\(text=f"접속 클라이언트: {len\(self.connected_clients\)}명"\)) Tj
+T*
+(        ) Tj
+T*
+(        self.root.after\(0, update\)) Tj
+T*
+() Tj
+T*
+(    def _set_status\(self, running: bool, host: str | None = None, port: int | None = None\):) Tj
+T*
+(        def update\(\):) Tj
+T*
+(            if running:) Tj
+T*
+(                self.status_label.config\() Tj
+T*
+(                    text=f"상태: 실행 중 \({host}:{port}\)", foreground="green") Tj
+T*
+(                \)) Tj
+T*
+(            else:) Tj
+T*
+(                self.status_label.config\(text="상태: 중지됨", foreground="red"\)) Tj
+T*
+() Tj
+T*
+(        self.root.after\(0, update\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(def main\(\):) Tj
+T*
+(    root = tk.Tk\(\)) Tj
+T*
+(    app = ServerGUI\(root\)) Tj
+T*
+(    root.mainloop\(\)) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(if __name__ == "__main__":) Tj
+T*
+(    main\(\)) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 8 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 1 0 R >> >> >>
+endobj
+8 0 obj
+<< /Type /Pages /Kids [3 0 R 5 0 R 7 0 R] /Count 3 >>
+endobj
+9 0 obj
+<< /Type /Catalog /Pages 8 0 R >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000077 00000 n 
+0000002831 00000 n 
+0000002957 00000 n 
+0000005651 00000 n 
+0000005777 00000 n 
+0000008398 00000 n 
+0000008524 00000 n 
+0000008593 00000 n 
+trailer
+<< /Size 10 /Root 9 0 R >>
+startxref
+8642
+%%EOF
